@@ -3,7 +3,9 @@ use ggez::*;
 use ggez::event::{KeyCode, KeyMods};
 use ggez::{event, graphics, Context, GameResult};
 
+const HEXAGON_SIZE: f32 = 300.0;
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
+const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
 const BAR_SIZE: (f32, f32) = (50.0, 5.0);
 
 struct InputState {
@@ -42,14 +44,27 @@ impl Bar {
         Ok(())
     }
     fn draw(&self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, [0.0, 1.0, 0.0, 1.0].into());
+        let xc = ORIGIN.0 + self.pos * HEXAGON_SIZE + HEXAGON_SIZE * (self.phi).cos();
+        let yc = ORIGIN.1 + HEXAGON_SIZE * (self.phi).sin();
+
+        let rect = graphics::Rect::new(xc, yc, self.w, self.h);
         let rectangle = graphics::Mesh::new_rectangle(
             ctx,
             graphics::DrawMode::fill(),
-            [100.0 + (self.pos * self.r), 400.0, self.w, self.h].into(),
-            [1.0, 0.5, 0.0, 1.0].into(),
+            rect.into(),
+            [1.0, 1.0 * self.phi / (2.0 * std::f32::consts::PI), 0.0, 1.0].into(),
         )?;
-        graphics::draw(ctx, &rectangle, (ggez::mint::Point2 { x: 0.0, y: 0.0 },))?;
+
+        graphics::draw(
+            ctx,
+            &rectangle,
+            ggez::graphics::DrawParam::from((
+                ggez::mint::Point2 { x: 0.0, y: 0.0 },
+                self.phi + std::f32::consts::PI / 2.0,
+                ggez::mint::Point2 { x: xc, y: yc },
+                [1.0, 1.0 * self.phi / (2.0 * std::f32::consts::PI), 0.0, 1.0].into(),
+            )),
+        )?;
         Ok(())
     }
 }
@@ -61,15 +76,23 @@ impl Bar {
 // }
 
 struct GameState {
-    bar: Bar,
+    bars: Vec<Bar>,
+    barpos: f32,
     input: InputState,
 }
 
 impl GameState {
-    /// Our new function will set up the initial state of our game.
     pub fn new() -> Self {
+        let mut bars = Vec::new();
+        for ang in 0..6 {
+            bars.push(Bar::new(
+                HEXAGON_SIZE,
+                ang as f32 * std::f32::consts::PI / 3.0,
+            ));
+        }
         GameState {
-            bar: Bar::new(200.0, 60.0),
+            bars: bars,
+            barpos: 0.5,
             input: InputState::default(),
         }
     }
@@ -78,20 +101,26 @@ impl GameState {
 impl event::EventHandler for GameState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         if self.input.left {
-            self.bar.pos -= 0.05;
+            self.barpos -= 0.05;
         } else if self.input.right {
-            self.bar.pos += 0.05;
+            self.barpos += 0.05;
         }
-        if self.bar.pos < 0.0 {
-            self.bar.pos = 0.0;
+        if self.barpos < 0.0 {
+            self.barpos = 0.0;
         }
-        if self.bar.pos > 1.0 {
-            self.bar.pos = 1.0;
+        if self.barpos > 1.0 {
+            self.barpos = 1.0;
+        }
+        for bar in self.bars.iter_mut() {
+            bar.pos = self.barpos;
         }
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        self.bar.draw(ctx)?;
+        graphics::clear(ctx, [0.0, 0.2, 0.3, 1.0].into());
+        for bar in self.bars.iter() {
+            bar.draw(ctx)?;
+        }
         graphics::present(ctx)?;
         Ok(())
     }
