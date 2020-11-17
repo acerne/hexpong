@@ -3,7 +3,7 @@ use ggez::*;
 use ggez::event::{KeyCode, KeyMods};
 use ggez::{event, graphics, Context, GameResult};
 
-const HEXAGON_SIZE: f32 = 300.0;
+const HEXAGON_SIZE: f32 = 200.0;
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
 const BAR_SIZE: (f32, f32) = (50.0, 5.0);
@@ -44,15 +44,19 @@ impl Bar {
         Ok(())
     }
     fn draw(&self, ctx: &mut Context) -> GameResult {
-        let xc = ORIGIN.0 + self.pos * HEXAGON_SIZE + HEXAGON_SIZE * (self.phi).cos();
-        let yc = ORIGIN.1 + HEXAGON_SIZE * (self.phi).sin();
+        // let xc = ORIGIN.0/ 4.0
+        //     + self.pos * HEXAGON_SIZE
+        //     + HEXAGON_SIZE * (self.phi + std::f32::consts::PI / 2.0).cos();
+        // let yc = ORIGIN.1 + HEXAGON_SIZE * (self.phi + std::f32::consts::PI / 2.0).sin();
+        let xc = ORIGIN.0 + -HEXAGON_SIZE / 2.0 + self.pos * HEXAGON_SIZE;
+        let yc = ORIGIN.1 + 3.0f32.sqrt() / 2.0 * HEXAGON_SIZE;
 
         let rect = graphics::Rect::new(xc, yc, self.w, self.h);
         let rectangle = graphics::Mesh::new_rectangle(
             ctx,
             graphics::DrawMode::fill(),
             rect.into(),
-            [1.0, 1.0 * self.phi / (2.0 * std::f32::consts::PI), 0.0, 1.0].into(),
+            [1.0, 0.5, 0.0, 1.0].into(),
         )?;
 
         graphics::draw(
@@ -60,9 +64,12 @@ impl Bar {
             &rectangle,
             ggez::graphics::DrawParam::from((
                 ggez::mint::Point2 { x: 0.0, y: 0.0 },
-                self.phi + std::f32::consts::PI / 2.0,
-                ggez::mint::Point2 { x: xc, y: yc },
-                [1.0, 1.0 * self.phi / (2.0 * std::f32::consts::PI), 0.0, 1.0].into(),
+                self.phi + std::f32::consts::PI,
+                ggez::mint::Point2 {
+                    x: ORIGIN.0,
+                    y: ORIGIN.1,
+                },
+                [1.0, 0.5, 0.0, 1.0].into(),
             )),
         )?;
         Ok(())
@@ -108,8 +115,8 @@ impl event::EventHandler for GameState {
         if self.barpos < 0.0 {
             self.barpos = 0.0;
         }
-        if self.barpos > 1.0 {
-            self.barpos = 1.0;
+        if self.barpos > (1.0 - BAR_SIZE.0 / HEXAGON_SIZE) {
+            self.barpos = 1.0 - BAR_SIZE.0 / HEXAGON_SIZE;
         }
         for bar in self.bars.iter_mut() {
             bar.pos = self.barpos;
