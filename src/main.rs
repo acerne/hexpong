@@ -22,6 +22,53 @@ impl Default for InputState {
     }
 }
 
+// HEXMATH
+struct Hexagon {
+    x: f32,
+    y: f32,
+    r: f32,
+    phi: f32,
+    vertices: [mint::Point2<f32>; 6],
+}
+
+impl Hexagon {
+    pub fn new(x: f32, y: f32, r: f32) -> Self {
+        Hexagon {
+            x: x,
+            y: y,
+            r: r,
+            phi: 0.0,
+            vertices: [mint::Point2 { x: 0.0, y: 0.0 }; 6],
+        }
+    }
+    fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
+        let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
+        for i in 0..6 {
+            let angle = (self.phi + 30.0 + i as f32 * 60.0).to_radians();
+            let xh = angle.cos() * self.r + self.x;
+            let yh = angle.sin() * self.r + self.y;
+            vertices[i] = mint::Point2 { x: xh, y: yh };
+        }
+        vertices
+    }
+    fn draw(&self, ctx: &mut Context) -> GameResult {
+        let vertices = self.get_vertices();
+        let polygon = graphics::Mesh::new_polygon(
+            ctx,
+            graphics::DrawMode::fill(),
+            &vertices,
+            [0.5, 1.0, 0.5, 1.0].into(),
+        )?;
+        graphics::draw(
+            ctx,
+            &polygon,
+            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
+        )?;
+        Ok(())
+    }
+}
+// !HEXMATH
+
 struct Bar {
     pos: f32,
     w: f32,
@@ -77,6 +124,7 @@ impl Bar {
 
 struct GameState {
     bars: Vec<Bar>,
+    blocks: Vec<Hexagon>,
     barpos: f32,
     input: InputState,
 }
@@ -87,8 +135,13 @@ impl GameState {
         for ang in 0..6 {
             bars.push(Bar::new(ang as f32 * std::f32::consts::PI / 3.0));
         }
+        let mut blocks = Vec::new();
+        for dist in 0..6 {
+            blocks.push(Hexagon::new(ORIGIN.0 + dist as f32 * 40.0, ORIGIN.1, 20.0));
+        }
         GameState {
             bars: bars,
+            blocks: blocks,
             barpos: 0.5,
             input: InputState::default(),
         }
@@ -115,6 +168,9 @@ impl event::EventHandler for GameState {
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, [0.0, 0.2, 0.3, 1.0].into());
+        for block in self.blocks.iter() {
+            block.draw(ctx)?;
+        }
         for bar in self.bars.iter() {
             bar.draw(ctx)?;
         }
