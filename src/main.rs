@@ -4,7 +4,6 @@ use ggez::event::{KeyCode, KeyMods};
 use ggez::{event, graphics, Context, GameResult};
 
 use rand::Rng;
-use std::collections::HashMap;
 
 const HEXAGON_SIZE: f32 = 300.0;
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
@@ -31,7 +30,6 @@ struct Hexagon {
     y: f32,
     r: f32,
     phi: f32,
-    vertices: [mint::Point2<f32>; 6],
 }
 
 impl Hexagon {
@@ -41,7 +39,6 @@ impl Hexagon {
             y: y,
             r: r,
             phi: 0.0,
-            vertices: [mint::Point2 { x: 0.0, y: 0.0 }; 6],
         }
     }
     fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
@@ -103,13 +100,13 @@ impl GridIndex {
 }
 
 struct HexagonalGrid {
-    tiles: HashMap<GridIndex, Hexagon>,
+    tiles: Vec<Hexagon>,
 }
 
 impl HexagonalGrid {
     pub fn new(grid_size: u16, tile_radius: f32) -> Self {
         let grid_radius = ((grid_size + 1) / 2) as i32;
-        let mut tiles = HashMap::new();
+        let mut tiles = Vec::new();
         for q in (-grid_radius + 1)..grid_radius {
             for r in std::cmp::max(-grid_radius + 1, -q - grid_radius + 1)
                 ..=std::cmp::min(grid_radius - 1, -q + grid_radius - 1)
@@ -117,16 +114,16 @@ impl HexagonalGrid {
                 let s = -q - r;
                 let index = GridIndex { q: q, r: r, s: s };
                 let point = index.to_pixel(tile_radius);
-                tiles.insert(index, Hexagon::new(point.x, point.y, tile_radius));
+                tiles.push(Hexagon::new(point.x, point.y, tile_radius));
             }
         }
         HexagonalGrid { tiles: tiles }
     }
     fn draw(&self, ctx: &mut Context) -> GameResult {
-        for (_, hexagon) in &self.tiles {
+        for hexagon in self.tiles.iter() {
             hexagon.draw(ctx)?;
         }
-        for (_, hexagon) in &self.tiles {
+        for hexagon in self.tiles.iter() {
             hexagon.draw_trace(ctx)?;
         }
         Ok(())
@@ -280,7 +277,9 @@ impl GameState {
             || self.ball.x > SCREEN_SIZE.0
             || self.ball.y > SCREEN_SIZE.1
         {
+            // hit - respanw ball
             self.ball = Ball::new();
+            return;
         }
 
         // ball colliding with bars
@@ -298,8 +297,32 @@ impl GameState {
                 let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
                 self.ball.vx = bouce_vec.x;
                 self.ball.vy = bouce_vec.y;
+                return;
+            }
+        }
+
+        // ball colliding with blocks
+        let mut to_destroy = usize::MAX;
+        for (pos, hexagon) in self.blocks.tiles.iter().enumerate() {
+            let dist =
+                ((hexagon.x - self.ball.x).powf(2.0) + (hexagon.y - self.ball.y).powf(2.0)).sqrt();
+            if dist < hexagon.r + self.ball.r {
+                // hit - bounce off and destroy block
+                let norm_vec = nalgebra::Vector2::new(
+                    (hexagon.x - self.ball.x) / dist,
+                    (hexagon.y - self.ball.y) / dist,
+                );
+                let veloc_vec = nalgebra::Vector2::new(self.ball.vx, self.ball.vy);
+                let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
+                self.ball.vx = bouce_vec.x;
+                self.ball.vy = bouce_vec.y;
+
+                to_destroy = pos;
                 break;
             }
+        }
+        if to_destroy < usize::MAX {
+            self.blocks.tiles.remove(to_destroy);
         }
     }
 }
@@ -319,7 +342,7 @@ impl event::EventHandler for GameState {
         }
         for bar in self.bars.iter_mut() {
             bar.pos = self.barpos;
-            bar.update(ctx);
+            bar.update(ctx)?;
         }
         self.collision();
         self.ball.update(ctx)?;
