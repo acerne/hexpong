@@ -3,12 +3,13 @@ use ggez::*;
 use ggez::event::{KeyCode, KeyMods};
 use ggez::{event, graphics, Context, GameResult};
 
+use rand::Rng;
 use std::collections::HashMap;
 
 const HEXAGON_SIZE: f32 = 300.0;
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
-const BAR_SIZE: (f32, f32) = (50.0, 5.0);
+const BAR_SIZE: (f32, f32) = (100.0, 12.0);
 
 struct InputState {
     left: bool,
@@ -113,7 +114,6 @@ impl HexagonalGrid {
             for r in std::cmp::max(-grid_radius + 1, -q - grid_radius + 1)
                 ..=std::cmp::min(grid_radius - 1, -q + grid_radius - 1)
             {
-                println!("{0}, {1}", q, r);
                 let s = -q - r;
                 let index = GridIndex { q: q, r: r, s: s };
                 let point = index.to_pixel(tile_radius);
@@ -135,10 +135,54 @@ impl HexagonalGrid {
 
 // !HEXMATH
 
+struct Ball {
+    x: f32,
+    y: f32,
+    vx: f32,
+    vy: f32,
+    r: f32,
+}
+
+impl Ball {
+    fn new() -> Self {
+        let mut rng = rand::thread_rng();
+        Ball {
+            x: ORIGIN.0,
+            y: ORIGIN.1 + HEXAGON_SIZE - 50.0,
+            vx: rng.gen::<f32>() * 3.0 - 1.5,
+            vy: -5.0,
+            r: 3.0,
+        }
+    }
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        self.x += self.vx;
+        self.y += self.vy;
+        Ok(())
+    }
+
+    fn draw(&self, ctx: &mut Context) -> GameResult {
+        let circle = graphics::Mesh::new_circle(
+            ctx,
+            graphics::DrawMode::fill(),
+            mint::Point2 {
+                x: self.x,
+                y: self.y,
+            },
+            self.r,
+            0.1,
+            graphics::WHITE,
+        )?;
+        graphics::draw(ctx, &circle, graphics::DrawParam::default())?;
+        Ok(())
+    }
+}
+
 struct Bar {
     pos: f32,
-    w: f32,
-    h: f32,
+    xc: f32,
+    yc: f32,
+    l1: f32, // w/2
+    l2: f32, // h/2
     phi: f32,
 }
 
@@ -146,43 +190,62 @@ impl Bar {
     pub fn new(phi: f32) -> Self {
         Bar {
             pos: 0.5,
-            w: BAR_SIZE.0,
-            h: BAR_SIZE.1,
+            xc: 0.0,
+            yc: 0.0,
+            l1: BAR_SIZE.0 / 2.0,
+            l2: BAR_SIZE.1 / 2.0,
             phi: phi,
         }
     }
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        let xc0 = ORIGIN.0
+            + if (self.phi % 120.0) == 0.0 {
+                -HEXAGON_SIZE / 2.0 + self.pos * HEXAGON_SIZE //- self.w / 2.0
+            } else {
+                HEXAGON_SIZE / 2.0 - self.pos * HEXAGON_SIZE // - self.w / 2.0
+            };
+        let yc0 = ORIGIN.1 + 3.0f32.sqrt() / 2.0 * HEXAGON_SIZE;
+
+        let phi = self.phi.to_radians();
+
+        self.xc = (xc0 - ORIGIN.0) * phi.cos() + (yc0 - ORIGIN.1) * phi.sin() + ORIGIN.0;
+        self.yc = -(xc0 - ORIGIN.0) * phi.sin() + (yc0 - ORIGIN.1) * phi.cos() + ORIGIN.1;
+
         Ok(())
     }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
-        let xc = ORIGIN.0
-            + if (self.phi % (2.0 * std::f32::consts::PI / 3.0)) != 0.0 {
-                -HEXAGON_SIZE / 2.0 + self.pos * HEXAGON_SIZE - self.w / 2.0
-            } else {
-                HEXAGON_SIZE / 2.0 - self.pos * HEXAGON_SIZE - self.w / 2.0
-            };
-        let yc = ORIGIN.1 + 3.0f32.sqrt() / 2.0 * HEXAGON_SIZE;
+    fn get_vertices(&self) -> [mint::Point2<f32>; 4] {
+        let mut vertices: [mint::Point2<f32>; 4] = [mint::Point2 { x: 0.0, y: 0.0 }; 4];
 
-        let rect = graphics::Rect::new(xc, yc, self.w, self.h);
-        let rectangle = graphics::Mesh::new_rectangle(
+        let phi = self.phi.to_radians();
+
+        let long_cos = self.l1 * phi.cos();
+        let long_sin = self.l1 * phi.sin();
+        let short_cos = self.l2 * phi.cos();
+        let short_sin = self.l2 * phi.sin();
+
+        vertices[0].x = self.xc + long_cos + short_sin;
+        vertices[0].y = self.yc - long_sin + short_cos;
+        vertices[1].x = self.xc + long_cos - short_sin;
+        vertices[1].y = self.yc - long_sin - short_cos;
+        vertices[2].x = self.xc - long_cos - short_sin;
+        vertices[2].y = self.yc + long_sin - short_cos;
+        vertices[3].x = self.xc - long_cos + short_sin;
+        vertices[3].y = self.yc + long_sin + short_cos;
+
+        vertices
+    }
+    fn draw(&self, ctx: &mut Context) -> GameResult {
+        let vertices = self.get_vertices();
+        let polygon = graphics::Mesh::new_polygon(
             ctx,
             graphics::DrawMode::fill(),
-            rect.into(),
+            &vertices,
             [1.0, 0.5, 0.0, 1.0].into(),
         )?;
-
         graphics::draw(
             ctx,
-            &rectangle,
-            ggez::graphics::DrawParam::from((
-                ggez::mint::Point2 { x: 0.0, y: 0.0 },
-                self.phi + std::f32::consts::PI,
-                ggez::mint::Point2 {
-                    x: ORIGIN.0,
-                    y: ORIGIN.1,
-                },
-                [1.0, 0.5, 0.0, 1.0].into(),
-            )),
+            &polygon,
+            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
         )?;
         Ok(())
     }
@@ -191,6 +254,7 @@ impl Bar {
 struct GameState {
     bars: Vec<Bar>,
     blocks: HexagonalGrid,
+    ball: Ball,
     barpos: f32,
     input: InputState,
 }
@@ -199,21 +263,43 @@ impl GameState {
     pub fn new() -> Self {
         let mut bars = Vec::new();
         for ang in 0..6 {
-            bars.push(Bar::new(ang as f32 * std::f32::consts::PI / 3.0));
+            bars.push(Bar::new(ang as f32 * 60.0));
         }
         GameState {
             bars: bars,
-            blocks: HexagonalGrid::new(9, 20.0), // TODO as parameter
+            blocks: HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
+            ball: Ball::new(),
             barpos: 0.5,
             input: InputState::default(),
+        }
+    }
+
+    fn collision(&mut self) {
+        // ball colliding with bars
+        for bar in self.bars.iter() {
+            let phi = (-bar.phi).to_radians();
+            let tx = (self.ball.x - bar.xc) * phi.cos() + (self.ball.y - bar.yc) * phi.sin();
+            let ty = -(self.ball.x - bar.xc) * phi.sin() + (self.ball.y - bar.yc) * phi.cos();
+            if tx > -bar.l1 && tx < bar.l1 && ty > -bar.l2 && ty < bar.l2 {
+                // hit - bounce off
+                let norm_vec = nalgebra::Vector2::new(
+                    (phi + std::f32::consts::PI / 2.0).cos(),
+                    (phi + std::f32::consts::PI / 2.0).sin(),
+                );
+                let veloc_vec = nalgebra::Vector2::new(self.ball.vx, self.ball.vy);
+                let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
+                self.ball.vx = bouce_vec.x;
+                self.ball.vy = bouce_vec.y;
+                break;
+            }
         }
     }
 }
 
 impl event::EventHandler for GameState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
         if self.input.left {
-            self.barpos -= 0.03; // TODO as parameter + autoscale
+            self.barpos -= 0.03; // TODO as parameter
         } else if self.input.right {
             self.barpos += 0.03;
         }
@@ -225,7 +311,10 @@ impl event::EventHandler for GameState {
         }
         for bar in self.bars.iter_mut() {
             bar.pos = self.barpos;
+            bar.update(ctx);
         }
+        self.collision();
+        self.ball.update(ctx)?;
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -234,6 +323,7 @@ impl event::EventHandler for GameState {
         for bar in self.bars.iter() {
             bar.draw(ctx)?;
         }
+        self.ball.draw(ctx)?;
         graphics::present(ctx)?;
         Ok(())
     }
