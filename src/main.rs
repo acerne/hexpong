@@ -159,7 +159,6 @@ impl Ball {
         self.y += self.vy;
         Ok(())
     }
-
     fn draw(&self, ctx: &mut Context) -> GameResult {
         let circle = graphics::Mesh::new_circle(
             ctx,
@@ -275,6 +274,15 @@ impl GameState {
     }
 
     fn collision(&mut self) {
+        // ball colliding with walls
+        if self.ball.x < 0.0
+            || self.ball.y < 0.0
+            || self.ball.x > SCREEN_SIZE.0
+            || self.ball.y > SCREEN_SIZE.1
+        {
+            self.ball = Ball::new();
+        }
+
         // ball colliding with bars
         for bar in self.bars.iter() {
             let phi = (-bar.phi).to_radians();
