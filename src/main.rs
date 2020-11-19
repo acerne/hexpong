@@ -10,6 +10,12 @@ const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
 const BAR_SIZE: (f32, f32) = (100.0, 12.0); // TODO: scaling with screen
 
+trait Block {
+    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>>;
+    fn update(&mut self, _ctx: &mut Context) -> GameResult;
+    fn draw(&self, ctx: &mut Context) -> GameResult;
+}
+
 struct Hexagon {
     x: f32,
     y: f32,
@@ -18,25 +24,6 @@ struct Hexagon {
 }
 
 impl Hexagon {
-    pub fn new(x: f32, y: f32, r: f32) -> Self {
-        Hexagon {
-            x: x,
-            y: y,
-            r: r,
-            phi: 0.0,
-        }
-    }
-    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
-        let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
-        if dist < self.r + ball.r {
-            // hit - bounce off and destroy block
-            return Some(nalgebra::Vector2::new(
-                (self.x - ball.x) / dist,
-                (self.y - ball.y) / dist,
-            ));
-        }
-        None
-    }
     fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
         let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
         for i in 0..6 {
@@ -46,21 +33,6 @@ impl Hexagon {
             vertices[i] = mint::Point2 { x: xh, y: yh };
         }
         vertices
-    }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
-        let vertices = self.get_vertices();
-        let polygon = graphics::Mesh::new_polygon(
-            ctx,
-            graphics::DrawMode::fill(),
-            &vertices,
-            [0.5, 1.0, 0.5, 1.0].into(),
-        )?;
-        graphics::draw(
-            ctx,
-            &polygon,
-            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-        )?;
-        Ok(())
     }
     fn draw_trace(&self, ctx: &mut Context) -> GameResult {
         let vertices = self.get_vertices();
@@ -73,6 +45,38 @@ impl Hexagon {
         graphics::draw(
             ctx,
             &trace,
+            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
+        )?;
+        Ok(())
+    }
+}
+
+impl Block for Hexagon {
+    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+        let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
+        if dist < self.r + ball.r {
+            // hit - bounce off and destroy block
+            return Some(nalgebra::Vector2::new(
+                (self.x - ball.x) / dist,
+                (self.y - ball.y) / dist,
+            ));
+        }
+        None
+    }
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        Ok(())
+    }
+    fn draw(&self, ctx: &mut Context) -> GameResult {
+        let vertices = self.get_vertices();
+        let polygon = graphics::Mesh::new_polygon(
+            ctx,
+            graphics::DrawMode::fill(),
+            &vertices,
+            [0.5, 1.0, 0.5, 1.0].into(),
+        )?;
+        graphics::draw(
+            ctx,
+            &polygon,
             ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
         )?;
         Ok(())
@@ -110,7 +114,12 @@ impl HexagonalGrid {
                 let s = -q - r;
                 let index = GridIndex { q: q, r: r, s: s };
                 let point = index.to_pixel(tile_radius);
-                tiles.push(Hexagon::new(point.x, point.y, tile_radius));
+                tiles.push(Hexagon {
+                    x: point.x,
+                    y: point.y,
+                    r: tile_radius,
+                    phi: 0.0,
+                });
             }
         }
         HexagonalGrid { tiles: tiles }
@@ -151,6 +160,20 @@ impl Ball {
         self.vx = bouce_vec.x;
         self.vy = bouce_vec.y;
     }
+}
+
+impl Block for Ball {
+    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+        let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
+        if dist < self.r + ball.r {
+            // hit - bounce off and destroy block
+            return Some(nalgebra::Vector2::new(
+                (self.x - ball.x) / dist,
+                (self.y - ball.y) / dist,
+            ));
+        }
+        None
+    }
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         self.x += self.vx;
         self.y += self.vy;
@@ -174,25 +197,39 @@ impl Ball {
 }
 
 struct Bar {
-    pos: f32,
     xc: f32,
     yc: f32,
+    pos: f32,
     l1: f32, // w/2
     l2: f32, // h/2
     phi: f32,
 }
 
 impl Bar {
-    pub fn new(phi: f32) -> Self {
-        Bar {
-            pos: 0.5,
-            xc: 0.0,
-            yc: 0.0,
-            l1: BAR_SIZE.0 / 2.0,
-            l2: BAR_SIZE.1 / 2.0,
-            phi: phi,
-        }
+    fn get_vertices(&self) -> [mint::Point2<f32>; 4] {
+        let mut vertices: [mint::Point2<f32>; 4] = [mint::Point2 { x: 0.0, y: 0.0 }; 4];
+
+        let phi = self.phi.to_radians();
+
+        let long_cos = self.l1 * phi.cos();
+        let long_sin = self.l1 * phi.sin();
+        let short_cos = self.l2 * phi.cos();
+        let short_sin = self.l2 * phi.sin();
+
+        vertices[0].x = self.xc + long_cos + short_sin;
+        vertices[0].y = self.yc - long_sin + short_cos;
+        vertices[1].x = self.xc + long_cos - short_sin;
+        vertices[1].y = self.yc - long_sin - short_cos;
+        vertices[2].x = self.xc - long_cos - short_sin;
+        vertices[2].y = self.yc + long_sin - short_cos;
+        vertices[3].x = self.xc - long_cos + short_sin;
+        vertices[3].y = self.yc + long_sin + short_cos;
+
+        vertices
     }
+}
+
+impl Block for Bar {
     fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
         let phi = (-self.phi).to_radians();
         let tx = (ball.x - self.xc) * phi.cos() + (ball.y - self.yc) * phi.sin();
@@ -221,27 +258,6 @@ impl Bar {
         self.yc = -(xc0 - ORIGIN.0) * phi.sin() + (yc0 - ORIGIN.1) * phi.cos() + ORIGIN.1;
 
         Ok(())
-    }
-    fn get_vertices(&self) -> [mint::Point2<f32>; 4] {
-        let mut vertices: [mint::Point2<f32>; 4] = [mint::Point2 { x: 0.0, y: 0.0 }; 4];
-
-        let phi = self.phi.to_radians();
-
-        let long_cos = self.l1 * phi.cos();
-        let long_sin = self.l1 * phi.sin();
-        let short_cos = self.l2 * phi.cos();
-        let short_sin = self.l2 * phi.sin();
-
-        vertices[0].x = self.xc + long_cos + short_sin;
-        vertices[0].y = self.yc - long_sin + short_cos;
-        vertices[1].x = self.xc + long_cos - short_sin;
-        vertices[1].y = self.yc - long_sin - short_cos;
-        vertices[2].x = self.xc - long_cos - short_sin;
-        vertices[2].y = self.yc + long_sin - short_cos;
-        vertices[3].x = self.xc - long_cos + short_sin;
-        vertices[3].y = self.yc + long_sin + short_cos;
-
-        vertices
     }
     fn draw(&self, ctx: &mut Context) -> GameResult {
         let vertices = self.get_vertices();
@@ -277,7 +293,7 @@ impl Default for InputState {
 struct GameState {
     bars: Vec<Bar>,
     blocks: HexagonalGrid,
-    ball: Ball,
+    balls: Vec<Ball>,
     barpos: f32,
     input: InputState,
 }
@@ -286,50 +302,65 @@ impl GameState {
     pub fn new() -> Self {
         let mut bars = Vec::new();
         for ang in 0..6 {
-            bars.push(Bar::new(ang as f32 * 60.0));
+            bars.push(Bar {
+                pos: 0.5,
+                xc: 0.0,
+                yc: 0.0,
+                l1: BAR_SIZE.0 / 2.0,
+                l2: BAR_SIZE.1 / 2.0,
+                phi: ang as f32 * 60.0,
+            });
         }
         GameState {
             bars: bars,
             blocks: HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
-            ball: Ball::new(),
+            balls: vec![Ball::new()],
             barpos: 0.5,
             input: InputState::default(),
         }
     }
 
     fn collision(&mut self) {
-        // ball colliding with walls
-        if self.ball.x < 0.0
-            || self.ball.y < 0.0
-            || self.ball.x > SCREEN_SIZE.0
-            || self.ball.y > SCREEN_SIZE.1
-        {
-            // hit - respanw ball
-            self.ball = Ball::new();
-            return;
-        }
-
-        // ball colliding with bars
-        for bar in self.bars.iter() {
-            let collision = bar.collision(&self.ball);
-            if let Some(norm_vec) = collision {
-                self.ball.bounce_away(&norm_vec);
-                return;
+        let mut balls_lost = Vec::new();
+        for (ball_index, ball) in self.balls.iter_mut().enumerate() {
+            // ball colliding with walls
+            if ball.x < 0.0 || ball.y < 0.0 || ball.x > SCREEN_SIZE.0 || ball.y > SCREEN_SIZE.1 {
+                // hit - respanw ball
+                balls_lost.push(ball_index);
+                break;
             }
-        }
 
-        // ball colliding with blocks
-        let mut to_destroy = usize::MAX;
-        for (pos, hexagon) in self.blocks.tiles.iter().enumerate() {
-            let collision = hexagon.collision(&self.ball);
-            if let Some(norm_vec) = collision {
-                self.ball.bounce_away(&norm_vec);
-                to_destroy = pos;
+            // ball colliding with bars
+            for bar in self.bars.iter() {
+                let collision = bar.collision(&ball);
+                if let Some(norm_vec) = collision {
+                    ball.bounce_away(&norm_vec);
+                    break;
+                }
+            }
+
+            // ball colliding with blocks
+            let mut to_destroy = usize::MAX;
+            for (hexagon_index, hexagon) in self.blocks.tiles.iter().enumerate() {
+                let collision = hexagon.collision(&ball);
+                if let Some(norm_vec) = collision {
+                    ball.bounce_away(&norm_vec);
+                    to_destroy = hexagon_index;
+                    break;
+                }
+            }
+            if to_destroy < usize::MAX {
+                self.blocks.tiles.remove(to_destroy);
                 break;
             }
         }
-        if to_destroy < usize::MAX {
-            self.blocks.tiles.remove(to_destroy);
+        if balls_lost.len() > 0 {
+            for &ball_index in balls_lost.iter() {
+                self.balls.remove(ball_index);
+            }
+        }
+        if self.balls.is_empty() {
+            self.balls.push(Ball::new());
         }
     }
 }
@@ -352,7 +383,9 @@ impl event::EventHandler for GameState {
             bar.update(ctx)?;
         }
         self.collision();
-        self.ball.update(ctx)?;
+        for ball in self.balls.iter_mut() {
+            ball.update(ctx)?;
+        }
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -361,7 +394,9 @@ impl event::EventHandler for GameState {
         for bar in self.bars.iter() {
             bar.draw(ctx)?;
         }
-        self.ball.draw(ctx)?;
+        for ball in self.balls.iter() {
+            ball.draw(ctx)?;
+        }
         graphics::present(ctx)?;
         Ok(())
     }
