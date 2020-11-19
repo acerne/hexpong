@@ -10,6 +10,7 @@ const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
 const BAR_SIZE: (f32, f32) = (100.0, 12.0); // TODO: scaling with screen
 const BALL_SPAWN: (f32, f32) = (ORIGIN.0, ORIGIN.1 + HEXAGON_SIZE - 50.0);
+const NUMBER_PLAYERS: usize = 2;
 
 trait VisualComponent {
     fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>>;
@@ -210,6 +211,7 @@ struct Bar {
     l1: f32, // w/2
     l2: f32, // h/2
     phi: f32,
+    color: graphics::Color,
 }
 
 impl Bar {
@@ -268,12 +270,8 @@ impl VisualComponent for Bar {
     }
     fn draw(&self, ctx: &mut Context) -> GameResult {
         let vertices = self.get_vertices();
-        let polygon = graphics::Mesh::new_polygon(
-            ctx,
-            graphics::DrawMode::fill(),
-            &vertices,
-            [1.0, 0.5, 0.0, 1.0].into(),
-        )?;
+        let polygon =
+            graphics::Mesh::new_polygon(ctx, graphics::DrawMode::fill(), &vertices, self.color)?;
         graphics::draw(
             ctx,
             &polygon,
@@ -297,33 +295,76 @@ impl Default for InputState {
     }
 }
 
-struct GameState {
+struct Player {
+    barpos: f32,
     bars: Vec<Bar>,
+    input: InputState,
+}
+
+impl Player {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if self.input.left {
+            self.barpos -= 0.03; // TODO as parameter
+        } else if self.input.right {
+            self.barpos += 0.03;
+        }
+        if self.barpos < (0.0 + BAR_SIZE.0 / HEXAGON_SIZE / 2.0) {
+            self.barpos = 0.0 + BAR_SIZE.0 / HEXAGON_SIZE / 2.0;
+        }
+        if self.barpos > (1.0 - BAR_SIZE.0 / HEXAGON_SIZE / 2.0) {
+            self.barpos = 1.0 - BAR_SIZE.0 / HEXAGON_SIZE / 2.0;
+        }
+        for bar in self.bars.iter_mut() {
+            bar.pos = self.barpos;
+            bar.update(ctx)?;
+        }
+        Ok(())
+    }
+    fn draw(&self, ctx: &mut Context) -> GameResult {
+        for bar in self.bars.iter() {
+            bar.draw(ctx)?;
+        }
+        Ok(())
+    }
+}
+
+struct GameState {
+    players: Vec<Player>,
     blocks: HexagonalGrid,
     balls: Vec<pawn::Ball>,
-    barpos: f32,
-    input: InputState,
 }
 
 impl GameState {
     pub fn new() -> Self {
-        let mut bars = Vec::new();
-        for ang in 0..6 {
-            bars.push(Bar {
-                pos: 0.5,
-                xc: 0.0,
-                yc: 0.0,
-                l1: BAR_SIZE.0 / 2.0,
-                l2: BAR_SIZE.1 / 2.0,
-                phi: ang as f32 * 60.0,
+        let mut players = Vec::new();
+        for p in 0..NUMBER_PLAYERS {
+            let mut bars = Vec::new();
+            for ang in (p..6).step_by(NUMBER_PLAYERS) {
+                bars.push(Bar {
+                    pos: 0.5,
+                    xc: 0.0,
+                    yc: 0.0,
+                    l1: BAR_SIZE.0 / 2.0,
+                    l2: BAR_SIZE.1 / 2.0,
+                    phi: ang as f32 * 60.0,
+                    color: graphics::Color::new(
+                        if p == 0 { 1.0 } else { 0.0 },
+                        if p == 1 { 1.0 } else { 0.0 },
+                        if p == 2 { 1.0 } else { 0.0 },
+                        1.0,
+                    ),
+                });
+            }
+            players.push(Player {
+                barpos: 0.5,
+                bars: bars,
+                input: InputState::default(),
             });
         }
         GameState {
-            bars: bars,
+            players: players,
             blocks: HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
             balls: vec![pawn::Ball::new()],
-            barpos: 0.5,
-            input: InputState::default(),
         }
     }
 
@@ -338,11 +379,13 @@ impl GameState {
             }
 
             // ball colliding with bars
-            for bar in self.bars.iter() {
-                let collision = bar.collision(&ball);
-                if let Some(norm_vec) = collision {
-                    ball.bounce_away(&norm_vec);
-                    break;
+            for player in self.players.iter() {
+                for bar in player.bars.iter() {
+                    let collision = bar.collision(&ball);
+                    if let Some(norm_vec) = collision {
+                        ball.bounce_away(&norm_vec);
+                        break;
+                    }
                 }
             }
 
@@ -370,24 +413,39 @@ impl GameState {
             self.balls.push(pawn::Ball::new());
         }
     }
+
+    fn update_input(&mut self, keycode: KeyCode, key_pressed: bool) {
+        match NUMBER_PLAYERS {
+            1 => match keycode {
+                KeyCode::Left => self.players[0].input.left = key_pressed,
+                KeyCode::Right => self.players[0].input.right = key_pressed,
+                _ => (),
+            },
+            2 => match keycode {
+                KeyCode::Left => self.players[0].input.left = key_pressed,
+                KeyCode::Right => self.players[0].input.right = key_pressed,
+                KeyCode::A => self.players[1].input.left = key_pressed,
+                KeyCode::D => self.players[1].input.right = key_pressed,
+                _ => (),
+            },
+            3 => match keycode {
+                KeyCode::Left => self.players[0].input.left = key_pressed,
+                KeyCode::Right => self.players[0].input.right = key_pressed,
+                KeyCode::D => self.players[1].input.left = key_pressed,
+                KeyCode::A => self.players[1].input.right = key_pressed,
+                KeyCode::L => self.players[2].input.left = key_pressed,
+                KeyCode::J => self.players[2].input.right = key_pressed,
+                _ => (),
+            },
+            _ => panic!("Exceeded the number of players!"),
+        }
+    }
 }
 
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        if self.input.left {
-            self.barpos -= 0.03; // TODO as parameter
-        } else if self.input.right {
-            self.barpos += 0.03;
-        }
-        if self.barpos < (0.0 + BAR_SIZE.0 / HEXAGON_SIZE / 2.0) {
-            self.barpos = 0.0 + BAR_SIZE.0 / HEXAGON_SIZE / 2.0;
-        }
-        if self.barpos > (1.0 - BAR_SIZE.0 / HEXAGON_SIZE / 2.0) {
-            self.barpos = 1.0 - BAR_SIZE.0 / HEXAGON_SIZE / 2.0;
-        }
-        for bar in self.bars.iter_mut() {
-            bar.pos = self.barpos;
-            bar.update(ctx)?;
+        for player in self.players.iter_mut() {
+            player.update(ctx)?;
         }
         self.collision();
         for ball in self.balls.iter_mut() {
@@ -398,8 +456,8 @@ impl event::EventHandler for GameState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, [0.0, 0.2, 0.3, 1.0].into());
         self.blocks.draw(ctx)?;
-        for bar in self.bars.iter() {
-            bar.draw(ctx)?;
+        for player in self.players.iter() {
+            player.draw(ctx)?;
         }
         for ball in self.balls.iter() {
             ball.draw(ctx)?;
@@ -415,19 +473,11 @@ impl event::EventHandler for GameState {
         _keymod: KeyMods,
         _repeat: bool,
     ) {
-        if keycode == KeyCode::Left {
-            self.input.left = true;
-        } else if keycode == KeyCode::Right {
-            self.input.right = true;
-        }
+        self.update_input(keycode, true);
     }
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
-        if keycode == KeyCode::Left {
-            self.input.left = false;
-        } else if keycode == KeyCode::Right {
-            self.input.right = false;
-        }
+        self.update_input(keycode, false);
     }
 }
 
