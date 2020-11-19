@@ -9,50 +9,54 @@ const HEXAGON_SIZE: f32 = 300.0; // TODO: scaling with screen
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
 const BAR_SIZE: (f32, f32) = (100.0, 12.0); // TODO: scaling with screen
+const BALL_SPAWN: (f32, f32) = (ORIGIN.0, ORIGIN.1 + HEXAGON_SIZE - 50.0);
 
-trait Block {
-    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>>;
+trait VisualComponent {
+    fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>>;
     fn update(&mut self, _ctx: &mut Context) -> GameResult;
     fn draw(&self, ctx: &mut Context) -> GameResult;
 }
 
-struct Hexagon {
-    x: f32,
-    y: f32,
-    r: f32,
-    phi: f32,
-}
+pub mod block {
+    use ggez::*;
+    pub struct Hexagon {
+        pub x: f32,
+        pub y: f32,
+        pub r: f32,
+        pub phi: f32,
+    }
 
-impl Hexagon {
-    fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
-        let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
-        for i in 0..6 {
-            let angle = (self.phi + 30.0 + i as f32 * 60.0).to_radians();
-            let xh = angle.cos() * self.r + self.x;
-            let yh = angle.sin() * self.r + self.y;
-            vertices[i] = mint::Point2 { x: xh, y: yh };
+    impl Hexagon {
+        pub fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
+            let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
+            for i in 0..6 {
+                let angle = (self.phi + 30.0 + i as f32 * 60.0).to_radians();
+                let xh = angle.cos() * self.r + self.x;
+                let yh = angle.sin() * self.r + self.y;
+                vertices[i] = mint::Point2 { x: xh, y: yh };
+            }
+            vertices
         }
-        vertices
-    }
-    fn draw_trace(&self, ctx: &mut Context) -> GameResult {
-        let vertices = self.get_vertices();
-        let trace = graphics::Mesh::new_polygon(
-            ctx,
-            graphics::DrawMode::stroke(3.0),
-            &vertices,
-            [0.8, 0.8, 0.8, 0.6].into(),
-        )?;
-        graphics::draw(
-            ctx,
-            &trace,
-            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-        )?;
-        Ok(())
+        pub fn draw_trace(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
+            let vertices = self.get_vertices();
+            let trace = ggez::graphics::Mesh::new_polygon(
+                ctx,
+                ggez::graphics::DrawMode::stroke(3.0),
+                &vertices,
+                [0.8, 0.8, 0.8, 0.6].into(),
+            )?;
+            ggez::graphics::draw(
+                ctx,
+                &trace,
+                ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
+            )?;
+            Ok(())
+        }
     }
 }
 
-impl Block for Hexagon {
-    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+impl VisualComponent for block::Hexagon {
+    fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>> {
         let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
         if dist < self.r + ball.r {
             // hit - bounce off and destroy block
@@ -83,11 +87,9 @@ impl Block for Hexagon {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
 struct GridIndex {
     q: i32,
     r: i32,
-    s: i32,
 }
 
 impl GridIndex {
@@ -100,7 +102,7 @@ impl GridIndex {
 }
 
 struct HexagonalGrid {
-    tiles: Vec<Hexagon>,
+    tiles: Vec<block::Hexagon>,
 }
 
 impl HexagonalGrid {
@@ -111,10 +113,9 @@ impl HexagonalGrid {
             for r in std::cmp::max(-grid_radius + 1, -q - grid_radius + 1)
                 ..=std::cmp::min(grid_radius - 1, -q + grid_radius - 1)
             {
-                let s = -q - r;
-                let index = GridIndex { q: q, r: r, s: s };
+                let index = GridIndex { q: q, r: r };
                 let point = index.to_pixel(tile_radius);
-                tiles.push(Hexagon {
+                tiles.push(block::Hexagon {
                     x: point.x,
                     y: point.y,
                     r: tile_radius,
@@ -135,35 +136,41 @@ impl HexagonalGrid {
     }
 }
 
-struct Ball {
-    x: f32,
-    y: f32,
-    vx: f32,
-    vy: f32,
-    r: f32,
+mod pawn {
+    use ggez::*;
+    pub struct Ball {
+        pub x: f32,
+        pub y: f32,
+        pub vx: f32,
+        pub vy: f32,
+        pub r: f32,
+    }
+
+    impl Ball {
+        pub fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
+            let veloc_vec = nalgebra::Vector2::new(self.vx, self.vy);
+            let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
+            self.vx = bouce_vec.x;
+            self.vy = bouce_vec.y;
+        }
+    }
 }
 
-impl Ball {
-    fn new() -> Self {
+impl pawn::Ball {
+    pub fn new() -> Self {
         let mut rng = rand::thread_rng();
-        Ball {
-            x: ORIGIN.0,
-            y: ORIGIN.1 + HEXAGON_SIZE - 50.0,
+        pawn::Ball {
+            x: BALL_SPAWN.0,
+            y: BALL_SPAWN.1,
             vx: rng.gen::<f32>() * 3.0 - 1.5,
             vy: -5.0,
             r: 3.0,
         }
     }
-    fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
-        let veloc_vec = nalgebra::Vector2::new(self.vx, self.vy);
-        let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
-        self.vx = bouce_vec.x;
-        self.vy = bouce_vec.y;
-    }
 }
 
-impl Block for Ball {
-    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+impl VisualComponent for pawn::Ball {
+    fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>> {
         let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
         if dist < self.r + ball.r {
             // hit - bounce off and destroy block
@@ -229,8 +236,8 @@ impl Bar {
     }
 }
 
-impl Block for Bar {
-    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+impl VisualComponent for Bar {
+    fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>> {
         let phi = (-self.phi).to_radians();
         let tx = (ball.x - self.xc) * phi.cos() + (ball.y - self.yc) * phi.sin();
         let ty = -(ball.x - self.xc) * phi.sin() + (ball.y - self.yc) * phi.cos();
@@ -246,9 +253,9 @@ impl Block for Bar {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         let xc0 = ORIGIN.0
             + if (self.phi % 120.0) == 0.0 {
-                -HEXAGON_SIZE / 2.0 + self.pos * HEXAGON_SIZE //- self.w / 2.0
+                -HEXAGON_SIZE / 2.0 + self.pos * HEXAGON_SIZE
             } else {
-                HEXAGON_SIZE / 2.0 - self.pos * HEXAGON_SIZE // - self.w / 2.0
+                HEXAGON_SIZE / 2.0 - self.pos * HEXAGON_SIZE
             };
         let yc0 = ORIGIN.1 + 3.0f32.sqrt() / 2.0 * HEXAGON_SIZE;
 
@@ -293,7 +300,7 @@ impl Default for InputState {
 struct GameState {
     bars: Vec<Bar>,
     blocks: HexagonalGrid,
-    balls: Vec<Ball>,
+    balls: Vec<pawn::Ball>,
     barpos: f32,
     input: InputState,
 }
@@ -314,7 +321,7 @@ impl GameState {
         GameState {
             bars: bars,
             blocks: HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
-            balls: vec![Ball::new()],
+            balls: vec![pawn::Ball::new()],
             barpos: 0.5,
             input: InputState::default(),
         }
@@ -360,7 +367,7 @@ impl GameState {
             }
         }
         if self.balls.is_empty() {
-            self.balls.push(Ball::new());
+            self.balls.push(pawn::Ball::new());
         }
     }
 }
