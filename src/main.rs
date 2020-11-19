@@ -5,26 +5,11 @@ use ggez::{event, graphics, Context, GameResult};
 
 use rand::Rng;
 
-const HEXAGON_SIZE: f32 = 300.0;
+const HEXAGON_SIZE: f32 = 300.0; // TODO: scaling with screen
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
-const BAR_SIZE: (f32, f32) = (100.0, 12.0);
+const BAR_SIZE: (f32, f32) = (100.0, 12.0); // TODO: scaling with screen
 
-struct InputState {
-    left: bool,
-    right: bool,
-}
-
-impl Default for InputState {
-    fn default() -> Self {
-        InputState {
-            left: false,
-            right: false,
-        }
-    }
-}
-
-// HEXMATH
 struct Hexagon {
     x: f32,
     y: f32,
@@ -40,6 +25,17 @@ impl Hexagon {
             r: r,
             phi: 0.0,
         }
+    }
+    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+        let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
+        if dist < self.r + ball.r {
+            // hit - bounce off and destroy block
+            return Some(nalgebra::Vector2::new(
+                (self.x - ball.x) / dist,
+                (self.y - ball.y) / dist,
+            ));
+        }
+        None
     }
     fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
         let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
@@ -130,8 +126,6 @@ impl HexagonalGrid {
     }
 }
 
-// !HEXMATH
-
 struct Ball {
     x: f32,
     y: f32,
@@ -150,6 +144,12 @@ impl Ball {
             vy: -5.0,
             r: 3.0,
         }
+    }
+    fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
+        let veloc_vec = nalgebra::Vector2::new(self.vx, self.vy);
+        let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
+        self.vx = bouce_vec.x;
+        self.vy = bouce_vec.y;
     }
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         self.x += self.vx;
@@ -192,6 +192,19 @@ impl Bar {
             l2: BAR_SIZE.1 / 2.0,
             phi: phi,
         }
+    }
+    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
+        let phi = (-self.phi).to_radians();
+        let tx = (ball.x - self.xc) * phi.cos() + (ball.y - self.yc) * phi.sin();
+        let ty = -(ball.x - self.xc) * phi.sin() + (ball.y - self.yc) * phi.cos();
+        if tx > -self.l1 && tx < self.l1 && ty > -self.l2 && ty < self.l2 {
+            // hit - bounce off
+            return Some(nalgebra::Vector2::new(
+                (phi + std::f32::consts::PI / 2.0).cos(),
+                (phi + std::f32::consts::PI / 2.0).sin(),
+            ));
+        }
+        None
     }
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         let xc0 = ORIGIN.0
@@ -247,6 +260,20 @@ impl Bar {
     }
 }
 
+struct InputState {
+    left: bool,
+    right: bool,
+}
+
+impl Default for InputState {
+    fn default() -> Self {
+        InputState {
+            left: false,
+            right: false,
+        }
+    }
+}
+
 struct GameState {
     bars: Vec<Bar>,
     blocks: HexagonalGrid,
@@ -284,19 +311,9 @@ impl GameState {
 
         // ball colliding with bars
         for bar in self.bars.iter() {
-            let phi = (-bar.phi).to_radians();
-            let tx = (self.ball.x - bar.xc) * phi.cos() + (self.ball.y - bar.yc) * phi.sin();
-            let ty = -(self.ball.x - bar.xc) * phi.sin() + (self.ball.y - bar.yc) * phi.cos();
-            if tx > -bar.l1 && tx < bar.l1 && ty > -bar.l2 && ty < bar.l2 {
-                // hit - bounce off
-                let norm_vec = nalgebra::Vector2::new(
-                    (phi + std::f32::consts::PI / 2.0).cos(),
-                    (phi + std::f32::consts::PI / 2.0).sin(),
-                );
-                let veloc_vec = nalgebra::Vector2::new(self.ball.vx, self.ball.vy);
-                let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
-                self.ball.vx = bouce_vec.x;
-                self.ball.vy = bouce_vec.y;
+            let collision = bar.collision(&self.ball);
+            if let Some(norm_vec) = collision {
+                self.ball.bounce_away(&norm_vec);
                 return;
             }
         }
@@ -304,19 +321,9 @@ impl GameState {
         // ball colliding with blocks
         let mut to_destroy = usize::MAX;
         for (pos, hexagon) in self.blocks.tiles.iter().enumerate() {
-            let dist =
-                ((hexagon.x - self.ball.x).powf(2.0) + (hexagon.y - self.ball.y).powf(2.0)).sqrt();
-            if dist < hexagon.r + self.ball.r {
-                // hit - bounce off and destroy block
-                let norm_vec = nalgebra::Vector2::new(
-                    (hexagon.x - self.ball.x) / dist,
-                    (hexagon.y - self.ball.y) / dist,
-                );
-                let veloc_vec = nalgebra::Vector2::new(self.ball.vx, self.ball.vy);
-                let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
-                self.ball.vx = bouce_vec.x;
-                self.ball.vy = bouce_vec.y;
-
+            let collision = hexagon.collision(&self.ball);
+            if let Some(norm_vec) = collision {
+                self.ball.bounce_away(&norm_vec);
                 to_destroy = pos;
                 break;
             }
