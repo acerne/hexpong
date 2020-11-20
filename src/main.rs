@@ -4,6 +4,7 @@ use ggez::event::{KeyCode, KeyMods};
 use ggez::{event, graphics, Context, GameResult};
 
 mod component;
+mod levels;
 mod settings;
 
 trait VisualComponent {
@@ -28,7 +29,7 @@ impl Default for InputState {
 
 struct GameState {
     players: Vec<component::player::Player>,
-    blocks: component::block::HexagonalGrid,
+    level: levels::Level,
     balls: Vec<component::ball::Ball>,
 }
 
@@ -61,7 +62,7 @@ impl GameState {
         }
         GameState {
             players: players,
-            blocks: component::block::HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
+            level: levels::Level::new(String::from("levels/basic.yaml")), // TODO as parameter + autoscale
             balls: vec![component::ball::Ball::new()],
         }
     }
@@ -93,7 +94,7 @@ impl GameState {
 
             // ball colliding with blocks
             let mut block_hit = usize::MAX;
-            for (hexagon_index, hexagon) in self.blocks.tiles.iter().enumerate() {
+            for (hexagon_index, hexagon) in self.level.blocks.iter().enumerate() {
                 let collision = hexagon.collision(&ball);
                 if let Some(norm_vec) = collision {
                     ball.bounce_away(&norm_vec);
@@ -102,8 +103,8 @@ impl GameState {
                 }
             }
             if block_hit < usize::MAX {
-                if self.blocks.tiles[block_hit].hit() {
-                    self.blocks.tiles.remove(block_hit);
+                if self.level.blocks[block_hit].hit() {
+                    self.level.blocks.remove(block_hit);
                 }
                 break;
             }
@@ -159,7 +160,7 @@ impl event::EventHandler for GameState {
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, [0.0, 0.2, 0.3, 1.0].into());
-        self.blocks.draw(ctx)?;
+        self.level.draw(ctx)?;
         for player in self.players.iter() {
             player.draw(ctx)?;
         }

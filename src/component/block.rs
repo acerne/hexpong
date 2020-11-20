@@ -4,10 +4,22 @@ use crate::VisualComponent;
 use ggez::*;
 
 pub enum BlockType {
-    OneTouch,
-    TwoTouch,
-    ThreeTouch,
+    Basic,
+    Basic2,
+    Basic3,
     Immortal,
+}
+
+impl BlockType {
+    pub fn from_str(input: &str) -> BlockType {
+        match input {
+            "Basic" => BlockType::Basic,
+            "Basic2" => BlockType::Basic2,
+            "Basic3" => BlockType::Basic3,
+            "Immortal" => BlockType::Immortal,
+            _ => panic!("Invalid block shape"),
+        }
+    }
 }
 
 pub struct Hexagon {
@@ -46,22 +58,22 @@ impl Hexagon {
     }
     pub fn get_color(&self) -> [f32; 4] {
         match &self.block_type {
-            BlockType::OneTouch => [0.5, 1.0, 0.5, 1.0],
-            BlockType::TwoTouch => [1.0, 0.5, 0.5, 1.0],
-            BlockType::ThreeTouch => [0.5, 0.5, 1.0, 1.0],
+            BlockType::Basic => [0.5, 1.0, 0.5, 1.0],
+            BlockType::Basic2 => [1.0, 0.5, 0.5, 1.0],
+            BlockType::Basic3 => [0.5, 0.5, 1.0, 1.0],
             BlockType::Immortal => [0.5, 0.5, 0.5, 1.0],
             _ => [1.0, 0.0, 0.0, 1.0],
         }
     }
     pub fn hit(&mut self) -> bool {
         match self.block_type {
-            BlockType::OneTouch => true,
-            BlockType::TwoTouch => {
-                self.block_type = BlockType::OneTouch;
+            BlockType::Basic => true,
+            BlockType::Basic2 => {
+                self.block_type = BlockType::Basic;
                 false
             }
-            BlockType::ThreeTouch => {
-                self.block_type = BlockType::TwoTouch;
+            BlockType::Basic3 => {
+                self.block_type = BlockType::Basic2;
                 false
             }
             BlockType::Immortal => false,
@@ -103,60 +115,16 @@ impl VisualComponent for Hexagon {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct GridIndex {
-    q: i32,
-    r: i32,
+pub struct GridIndex {
+    pub q: i32,
+    pub r: i32,
 }
 
 impl GridIndex {
-    fn to_pixel(&self, tile_radius: f32) -> mint::Point2<f32> {
+    pub fn to_pixel(&self, tile_radius: f32) -> mint::Point2<f32> {
         let x = settings::ORIGIN.0
             + (self.q as f32 * 3.0f32.sqrt() + self.r as f32 * (3.0f32.sqrt() / 2.0)) * tile_radius;
         let y = settings::ORIGIN.1 + (3.0 / 2.0 * self.r as f32) * tile_radius;
         mint::Point2 { x: x, y: y }
-    }
-}
-
-pub struct HexagonalGrid {
-    pub tiles: Vec<Hexagon>,
-}
-
-impl HexagonalGrid {
-    pub fn new(grid_size: u16, tile_radius: f32) -> Self {
-        let grid_radius = ((grid_size + 1) / 2) as i32;
-        let mut tiles = Vec::new();
-        for q in (-grid_radius + 1)..grid_radius {
-            for r in std::cmp::max(-grid_radius + 1, -q - grid_radius + 1)
-                ..=std::cmp::min(grid_radius - 1, -q + grid_radius - 1)
-            {
-                let index = GridIndex { q: q, r: r };
-                let point = index.to_pixel(tile_radius);
-                tiles.push(Hexagon {
-                    x: point.x,
-                    y: point.y,
-                    r: tile_radius,
-                    phi: 0.0,
-                    block_type: if q.abs() > 2 || r.abs() > 2 {
-                        BlockType::OneTouch
-                    } else if q.abs() == 2 || r.abs() == 2 {
-                        BlockType::TwoTouch
-                    } else if q.abs() == 1 || r.abs() == 1 {
-                        BlockType::ThreeTouch
-                    } else {
-                        BlockType::Immortal
-                    },
-                });
-            }
-        }
-        HexagonalGrid { tiles: tiles }
-    }
-    pub fn draw(&self, ctx: &mut Context) -> GameResult {
-        for hexagon in self.tiles.iter() {
-            hexagon.draw(ctx)?;
-        }
-        for hexagon in self.tiles.iter() {
-            hexagon.draw_trace(ctx)?;
-        }
-        Ok(())
     }
 }
