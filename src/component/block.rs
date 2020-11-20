@@ -1,8 +1,10 @@
 use crate::component::ball;
 use crate::settings;
+use crate::themes;
 use crate::VisualComponent;
 use ggez::*;
 
+#[derive(PartialEq, Eq, Hash)]
 pub enum BlockType {
     Basic,
     Basic2,
@@ -56,15 +58,6 @@ impl Hexagon {
         )?;
         Ok(())
     }
-    pub fn get_color(&self) -> [f32; 4] {
-        match &self.block_type {
-            BlockType::Basic => [0.5, 1.0, 0.5, 1.0],
-            BlockType::Basic2 => [1.0, 0.5, 0.5, 1.0],
-            BlockType::Basic3 => [0.5, 0.5, 1.0, 1.0],
-            BlockType::Immortal => [0.5, 0.5, 0.5, 1.0],
-            _ => [1.0, 0.0, 0.0, 1.0],
-        }
-    }
     pub fn hit(&mut self) -> bool {
         match self.block_type {
             BlockType::Basic => true,
@@ -96,13 +89,13 @@ impl VisualComponent for Hexagon {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         Ok(())
     }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
+    fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
         let vertices = self.get_vertices();
         let polygon = graphics::Mesh::new_polygon(
             ctx,
             graphics::DrawMode::fill(),
             &vertices,
-            self.get_color().into(),
+            theme.get_block_color(&self.block_type),
         )?;
         graphics::draw(
             ctx,

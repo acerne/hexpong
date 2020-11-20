@@ -1,0 +1,11 @@
+theme:
+  background: "303030"
+  wall: "A0A0A0"
+  player1: "00FFFF"
+  player2: "FF00FF"
+  player3: "FFFF00"
+  blocks:
+    - { block: "Basic", color: "7FFF7F" }
+    - { block: "Basic2", color: "FF7F7F" }
+    - { block: "Basic3", color: "7F7FFF" }
+    - { block: "Immortal", color: "7F7F7F" }

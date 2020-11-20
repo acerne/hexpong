@@ -1,4 +1,5 @@
 use crate::component::block;
+use crate::themes;
 use crate::VisualComponent;
 use ggez::*;
 use std::fs::File;
@@ -31,18 +32,17 @@ impl Level {
         let mut contents = String::new();
         f.read_to_string(&mut contents)
             .expect("Unable to read level file");
-        let yaml = YamlLoader::load_from_str(&contents).unwrap();
-        let level = &yaml[0]["level"];
+        let yaml = &YamlLoader::load_from_str(&contents).unwrap()[0]["level"];
         Level {
-            name: String::from(level["name"].as_str().expect("Missing property: name")),
-            shape: LevelShape::from_str(level["shape"].as_str().expect("Missing property: shape")),
-            size: level["size"].as_i64().expect("Missing property: size") as usize,
-            blocks: parse_blocks(level),
+            name: String::from(yaml["name"].as_str().expect("Missing property: name")),
+            shape: LevelShape::from_str(yaml["shape"].as_str().expect("Missing property: shape")),
+            size: yaml["size"].as_i64().expect("Missing property: size") as usize,
+            blocks: parse_blocks(yaml),
         }
     }
-    pub fn draw(&self, ctx: &mut Context) -> GameResult {
+    pub fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
         for hexagon in self.blocks.iter() {
-            hexagon.draw(ctx)?;
+            hexagon.draw(ctx, theme)?;
         }
         for hexagon in self.blocks.iter() {
             hexagon.draw_trace(ctx)?;

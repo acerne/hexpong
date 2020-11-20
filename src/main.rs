@@ -1,16 +1,17 @@
 use ggez::*;
 
 use ggez::event::{KeyCode, KeyMods};
-use ggez::{event, graphics, Context, GameResult};
+use ggez::{graphics, Context, GameResult};
 
 mod component;
 mod levels;
 mod settings;
+mod themes;
 
 trait VisualComponent {
     fn collision(&self, ball: &component::ball::Ball) -> Option<nalgebra::Vector2<f32>>;
     fn update(&mut self, _ctx: &mut Context) -> GameResult;
-    fn draw(&self, ctx: &mut Context) -> GameResult;
+    fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult;
 }
 
 pub struct InputState {
@@ -31,6 +32,7 @@ struct GameState {
     players: Vec<component::player::Player>,
     level: levels::Level,
     balls: Vec<component::ball::Ball>,
+    theme: themes::Theme,
 }
 
 impl GameState {
@@ -62,8 +64,9 @@ impl GameState {
         }
         GameState {
             players: players,
-            level: levels::Level::new(String::from("levels/armored.yaml")), // TODO as parameter + autoscale
+            level: levels::Level::new(String::from("levels/armored.yaml")),
             balls: vec![component::ball::Ball::new()],
+            theme: themes::Theme::new(String::from("themes/base.yaml")),
         }
     }
 
@@ -159,13 +162,13 @@ impl event::EventHandler for GameState {
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, [0.0, 0.2, 0.3, 1.0].into());
-        self.level.draw(ctx)?;
+        graphics::clear(ctx, self.theme.background);
+        self.level.draw(ctx, &self.theme)?;
         for player in self.players.iter() {
-            player.draw(ctx)?;
+            player.draw(ctx, &self.theme)?;
         }
         for ball in self.balls.iter() {
-            ball.draw(ctx)?;
+            ball.draw(ctx, &self.theme)?;
         }
         graphics::present(ctx)?;
         Ok(())

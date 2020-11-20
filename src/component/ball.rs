@@ -1,4 +1,5 @@
 use crate::settings;
+use crate::themes;
 use crate::VisualComponent;
 use ggez::*;
 use rand::Rng;
@@ -47,7 +48,7 @@ impl VisualComponent for Ball {
         self.y += self.vy;
         Ok(())
     }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
+    fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
         let circle = graphics::Mesh::new_circle(
             ctx,
             graphics::DrawMode::fill(),

@@ -1,5 +1,6 @@
 use crate::component::ball;
 use crate::settings;
+use crate::themes;
 use crate::InputState;
 use crate::VisualComponent;
 use ggez::*;
@@ -29,9 +30,9 @@ impl Player {
         }
         Ok(())
     }
-    pub fn draw(&self, ctx: &mut Context) -> GameResult {
+    pub fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
         for bar in self.bars.iter() {
-            bar.draw(ctx)?;
+            bar.draw(ctx, theme)?;
         }
         Ok(())
     }
@@ -107,7 +108,7 @@ impl VisualComponent for Bar {
 
         Ok(())
     }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
+    fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
         let vertices = self.get_vertices();
         let polygon =
             graphics::Mesh::new_polygon(ctx, graphics::DrawMode::fill(), &vertices, self.color)?;
