@@ -94,12 +94,16 @@ These can handicap or reward the game/player for a fixed amount of seconds, some
 - Scoring
   - *Scoring system - important to keep the balancing and fun in mind.*
   - *Highscore tracking.*
+- Color themes
+  - *Different color themes of neon-like variety*
+- Main menu
+  - *To select game mode/type, set options and such...*
+- Background
+  - *Some animation to break the monotony.*
 - Levels
   - *Different types of level layouts, predetermined block layout.*
 - Meshes
   - *Should work towars meshes only being created once and repeated over the frame, instead of creating and drawing it every time.*
-- Color themes
-  - *Different color themes of neon-like variety*
 - File configuration
   - *Ability to define levels and game configurations in a file path. Likely a json or yaml file.*
 - Sound effects

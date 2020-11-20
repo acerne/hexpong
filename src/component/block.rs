@@ -1,4 +1,4 @@
-use crate::pawn;
+use crate::component::ball;
 use crate::settings;
 use crate::VisualComponent;
 use ggez::*;
@@ -71,10 +71,9 @@ impl Hexagon {
 }
 
 impl VisualComponent for Hexagon {
-    fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>> {
+    fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
         let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
         if dist < self.r + ball.r {
-            // hit - bounce off and destroy block
             return Some(nalgebra::Vector2::new(
                 (self.x - ball.x) / dist,
                 (self.y - ball.y) / dist,
@@ -101,6 +100,8 @@ impl VisualComponent for Hexagon {
         Ok(())
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct GridIndex {
     q: i32,
