@@ -6,108 +6,12 @@ use ggez::{event, graphics, Context, GameResult};
 use rand::Rng;
 
 mod block;
-
-const HEXAGON_SIZE: f32 = 300.0; // TODO: scaling with screen
-const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
-const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
-const BAR_SIZE: (f32, f32) = (100.0, 12.0); // TODO: scaling with screen
-const BALL_SPAWN: (f32, f32) = (ORIGIN.0, ORIGIN.1 + HEXAGON_SIZE - 50.0);
-const NUMBER_PLAYERS: usize = 2;
+mod settings;
 
 trait VisualComponent {
     fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>>;
     fn update(&mut self, _ctx: &mut Context) -> GameResult;
     fn draw(&self, ctx: &mut Context) -> GameResult;
-}
-
-impl VisualComponent for block::Hexagon {
-    fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>> {
-        let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
-        if dist < self.r + ball.r {
-            // hit - bounce off and destroy block
-            return Some(nalgebra::Vector2::new(
-                (self.x - ball.x) / dist,
-                (self.y - ball.y) / dist,
-            ));
-        }
-        None
-    }
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        Ok(())
-    }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
-        let vertices = self.get_vertices();
-        let polygon = graphics::Mesh::new_polygon(
-            ctx,
-            graphics::DrawMode::fill(),
-            &vertices,
-            self.get_color().into(),
-        )?;
-        graphics::draw(
-            ctx,
-            &polygon,
-            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-        )?;
-        Ok(())
-    }
-}
-
-struct GridIndex {
-    q: i32,
-    r: i32,
-}
-
-impl GridIndex {
-    fn to_pixel(&self, tile_radius: f32) -> mint::Point2<f32> {
-        let x = ORIGIN.0
-            + (self.q as f32 * 3.0f32.sqrt() + self.r as f32 * (3.0f32.sqrt() / 2.0)) * tile_radius;
-        let y = ORIGIN.1 + (3.0 / 2.0 * self.r as f32) * tile_radius;
-        mint::Point2 { x: x, y: y }
-    }
-}
-
-struct HexagonalGrid {
-    tiles: Vec<block::Hexagon>,
-}
-
-impl HexagonalGrid {
-    pub fn new(grid_size: u16, tile_radius: f32) -> Self {
-        let grid_radius = ((grid_size + 1) / 2) as i32;
-        let mut tiles = Vec::new();
-        for q in (-grid_radius + 1)..grid_radius {
-            for r in std::cmp::max(-grid_radius + 1, -q - grid_radius + 1)
-                ..=std::cmp::min(grid_radius - 1, -q + grid_radius - 1)
-            {
-                let index = GridIndex { q: q, r: r };
-                let point = index.to_pixel(tile_radius);
-                tiles.push(block::Hexagon {
-                    x: point.x,
-                    y: point.y,
-                    r: tile_radius,
-                    phi: 0.0,
-                    block_type: if q.abs() > 2 || r.abs() > 2 {
-                        block::BlockType::OneTouch
-                    } else if q.abs() == 2 || r.abs() == 2 {
-                        block::BlockType::TwoTouch
-                    } else if q.abs() == 1 || r.abs() == 1 {
-                        block::BlockType::ThreeTouch
-                    } else {
-                        block::BlockType::Immortal
-                    },
-                });
-            }
-        }
-        HexagonalGrid { tiles: tiles }
-    }
-    fn draw(&self, ctx: &mut Context) -> GameResult {
-        for hexagon in self.tiles.iter() {
-            hexagon.draw(ctx)?;
-        }
-        for hexagon in self.tiles.iter() {
-            hexagon.draw_trace(ctx)?;
-        }
-        Ok(())
-    }
 }
 
 mod pawn {
@@ -134,8 +38,8 @@ impl pawn::Ball {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
         pawn::Ball {
-            x: BALL_SPAWN.0,
-            y: BALL_SPAWN.1,
+            x: settings::BALL_SPAWN.0,
+            y: settings::BALL_SPAWN.1,
             vx: rng.gen::<f32>() * 3.0 - 1.5,
             vy: -5.0,
             r: 3.0,
@@ -226,18 +130,22 @@ impl VisualComponent for Bar {
         None
     }
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        let xc0 = ORIGIN.0
+        let xc0 = settings::ORIGIN.0
             + if (self.phi % 120.0) == 0.0 {
-                -HEXAGON_SIZE / 2.0 + self.pos * HEXAGON_SIZE
+                -settings::HEXAGON_SIZE / 2.0 + self.pos * settings::HEXAGON_SIZE
             } else {
-                HEXAGON_SIZE / 2.0 - self.pos * HEXAGON_SIZE
+                settings::HEXAGON_SIZE / 2.0 - self.pos * settings::HEXAGON_SIZE
             };
-        let yc0 = ORIGIN.1 + 3.0f32.sqrt() / 2.0 * HEXAGON_SIZE;
+        let yc0 = settings::ORIGIN.1 + 3.0f32.sqrt() / 2.0 * settings::HEXAGON_SIZE;
 
         let phi = self.phi.to_radians();
 
-        self.xc = (xc0 - ORIGIN.0) * phi.cos() + (yc0 - ORIGIN.1) * phi.sin() + ORIGIN.0;
-        self.yc = -(xc0 - ORIGIN.0) * phi.sin() + (yc0 - ORIGIN.1) * phi.cos() + ORIGIN.1;
+        self.xc = (xc0 - settings::ORIGIN.0) * phi.cos()
+            + (yc0 - settings::ORIGIN.1) * phi.sin()
+            + settings::ORIGIN.0;
+        self.yc = -(xc0 - settings::ORIGIN.0) * phi.sin()
+            + (yc0 - settings::ORIGIN.1) * phi.cos()
+            + settings::ORIGIN.1;
 
         Ok(())
     }
@@ -281,11 +189,11 @@ impl Player {
         } else if self.input.right {
             self.barpos += 0.03;
         }
-        if self.barpos < (0.0 + BAR_SIZE.0 / HEXAGON_SIZE / 2.0) {
-            self.barpos = 0.0 + BAR_SIZE.0 / HEXAGON_SIZE / 2.0;
+        if self.barpos < (0.0 + settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0) {
+            self.barpos = 0.0 + settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0;
         }
-        if self.barpos > (1.0 - BAR_SIZE.0 / HEXAGON_SIZE / 2.0) {
-            self.barpos = 1.0 - BAR_SIZE.0 / HEXAGON_SIZE / 2.0;
+        if self.barpos > (1.0 - settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0) {
+            self.barpos = 1.0 - settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0;
         }
         for bar in self.bars.iter_mut() {
             bar.pos = self.barpos;
@@ -303,22 +211,22 @@ impl Player {
 
 struct GameState {
     players: Vec<Player>,
-    blocks: HexagonalGrid,
+    blocks: block::HexagonalGrid,
     balls: Vec<pawn::Ball>,
 }
 
 impl GameState {
     pub fn new() -> Self {
         let mut players = Vec::new();
-        for p in 0..NUMBER_PLAYERS {
+        for p in 0..settings::NUMBER_PLAYERS {
             let mut bars = Vec::new();
-            for ang in (p..6).step_by(NUMBER_PLAYERS) {
+            for ang in (p..6).step_by(settings::NUMBER_PLAYERS) {
                 bars.push(Bar {
                     pos: 0.5,
                     xc: 0.0,
                     yc: 0.0,
-                    l1: BAR_SIZE.0 / 2.0,
-                    l2: BAR_SIZE.1 / 2.0,
+                    l1: settings::BAR_SIZE.0 / 2.0,
+                    l2: settings::BAR_SIZE.1 / 2.0,
                     phi: ang as f32 * 60.0,
                     color: graphics::Color::new(
                         if p == 0 { 1.0 } else { 0.0 },
@@ -336,7 +244,7 @@ impl GameState {
         }
         GameState {
             players: players,
-            blocks: HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
+            blocks: block::HexagonalGrid::new(9, 20.0), // TODO as parameter + autoscale
             balls: vec![pawn::Ball::new()],
         }
     }
@@ -345,7 +253,11 @@ impl GameState {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
             // ball colliding with walls
-            if ball.x < 0.0 || ball.y < 0.0 || ball.x > SCREEN_SIZE.0 || ball.y > SCREEN_SIZE.1 {
+            if ball.x < 0.0
+                || ball.y < 0.0
+                || ball.x > settings::SCREEN_SIZE.0
+                || ball.y > settings::SCREEN_SIZE.1
+            {
                 // hit - respanw ball
                 balls_lost.push(ball_index);
                 break;
@@ -390,7 +302,7 @@ impl GameState {
     }
 
     fn update_input(&mut self, keycode: KeyCode, key_pressed: bool) {
-        match NUMBER_PLAYERS {
+        match settings::NUMBER_PLAYERS {
             1 => match keycode {
                 KeyCode::Left => self.players[0].input.left = key_pressed,
                 KeyCode::Right => self.players[0].input.right = key_pressed,
@@ -459,7 +371,10 @@ impl event::EventHandler for GameState {
 fn main() -> GameResult {
     let (ctx, events_loop) = &mut ggez::ContextBuilder::new("hexpong", "acerne")
         .window_setup(ggez::conf::WindowSetup::default().title("HexPong"))
-        .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
+        .window_mode(
+            ggez::conf::WindowMode::default()
+                .dimensions(settings::SCREEN_SIZE.0, settings::SCREEN_SIZE.1),
+        )
         .build()?;
 
     let state = &mut GameState::new();
