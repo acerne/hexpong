@@ -5,6 +5,8 @@ use ggez::{event, graphics, Context, GameResult};
 
 use rand::Rng;
 
+mod block;
+
 const HEXAGON_SIZE: f32 = 300.0; // TODO: scaling with screen
 const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 const ORIGIN: (f32, f32) = (SCREEN_SIZE.0 / 2.0, SCREEN_SIZE.1 / 2.0);
@@ -16,44 +18,6 @@ trait VisualComponent {
     fn collision(&self, ball: &pawn::Ball) -> Option<nalgebra::Vector2<f32>>;
     fn update(&mut self, _ctx: &mut Context) -> GameResult;
     fn draw(&self, ctx: &mut Context) -> GameResult;
-}
-
-pub mod block {
-    use ggez::*;
-    pub struct Hexagon {
-        pub x: f32,
-        pub y: f32,
-        pub r: f32,
-        pub phi: f32,
-    }
-
-    impl Hexagon {
-        pub fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
-            let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
-            for i in 0..6 {
-                let angle = (self.phi + 30.0 + i as f32 * 60.0).to_radians();
-                let xh = angle.cos() * self.r + self.x;
-                let yh = angle.sin() * self.r + self.y;
-                vertices[i] = mint::Point2 { x: xh, y: yh };
-            }
-            vertices
-        }
-        pub fn draw_trace(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
-            let vertices = self.get_vertices();
-            let trace = ggez::graphics::Mesh::new_polygon(
-                ctx,
-                ggez::graphics::DrawMode::stroke(3.0),
-                &vertices,
-                [0.8, 0.8, 0.8, 0.6].into(),
-            )?;
-            ggez::graphics::draw(
-                ctx,
-                &trace,
-                ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-            )?;
-            Ok(())
-        }
-    }
 }
 
 impl VisualComponent for block::Hexagon {
@@ -77,7 +41,7 @@ impl VisualComponent for block::Hexagon {
             ctx,
             graphics::DrawMode::fill(),
             &vertices,
-            [0.5, 1.0, 0.5, 1.0].into(),
+            self.get_color().into(),
         )?;
         graphics::draw(
             ctx,
@@ -121,6 +85,15 @@ impl HexagonalGrid {
                     y: point.y,
                     r: tile_radius,
                     phi: 0.0,
+                    block_type: if q.abs() > 2 || r.abs() > 2 {
+                        block::BlockType::OneTouch
+                    } else if q.abs() == 2 || r.abs() == 2 {
+                        block::BlockType::TwoTouch
+                    } else if q.abs() == 1 || r.abs() == 1 {
+                        block::BlockType::ThreeTouch
+                    } else {
+                        block::BlockType::Immortal
+                    },
                 });
             }
         }
@@ -390,17 +363,19 @@ impl GameState {
             }
 
             // ball colliding with blocks
-            let mut to_destroy = usize::MAX;
+            let mut block_hit = usize::MAX;
             for (hexagon_index, hexagon) in self.blocks.tiles.iter().enumerate() {
                 let collision = hexagon.collision(&ball);
                 if let Some(norm_vec) = collision {
                     ball.bounce_away(&norm_vec);
-                    to_destroy = hexagon_index;
+                    block_hit = hexagon_index;
                     break;
                 }
             }
-            if to_destroy < usize::MAX {
-                self.blocks.tiles.remove(to_destroy);
+            if block_hit < usize::MAX {
+                if self.blocks.tiles[block_hit].hit() {
+                    self.blocks.tiles.remove(block_hit);
+                }
                 break;
             }
         }
