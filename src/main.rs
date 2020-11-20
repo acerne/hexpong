@@ -62,7 +62,7 @@ impl GameState {
         }
         GameState {
             players: players,
-            level: levels::Level::new(String::from("levels/basic.yaml")), // TODO as parameter + autoscale
+            level: levels::Level::new(String::from("levels/armored.yaml")), // TODO as parameter + autoscale
             balls: vec![component::ball::Ball::new()],
         }
     }
