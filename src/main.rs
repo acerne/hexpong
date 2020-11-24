@@ -13,6 +13,7 @@ trait VisualComponent {
     fn collision(&self, ball: &component::ball::Ball) -> Option<nalgebra::Vector2<f32>>;
     fn update(&mut self, _ctx: &mut Context) -> GameResult;
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult;
+    fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh>;
 }
 
 pub struct InputState {
@@ -41,12 +42,12 @@ impl GameState {
     pub fn new() -> Self {
         let mode = gamemode::GameMode::new(
             "config/gamemodes/arcade-singleplayer.yaml",
-            gamemode::Difficulty::Hard,
+            gamemode::Difficulty::Easy,
         );
         GameState {
             players: mode.players,
             walls: mode.walls,
-            level: levels::Level::new(String::from("config/levels/armored.yaml")),
+            level: levels::Level::new(String::from("config/levels/crowded.yaml")),
             balls: vec![component::ball::Ball::new()],
             theme: themes::Theme::new(String::from("config/themes/base.yaml")),
         }
@@ -146,10 +147,16 @@ impl event::EventHandler for GameState {
         for player in self.players.iter_mut() {
             player.update(ctx)?;
         }
-        self.collision();
         for ball in self.balls.iter_mut() {
             ball.update(ctx)?;
         }
+        for block in self.level.blocks.iter_mut() {
+            block.update(ctx)?
+        }
+        for wall in self.walls.iter_mut() {
+            wall.update(ctx)?
+        }
+        self.collision();
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {

@@ -1,0 +1,129 @@
+level:
+  name: "Crowded"
+  shape: Hexagonal
+  block-size: 0.06
+  blocks:
+    # first row
+    - { q: -1, r: -5, block: Basic }
+    - { q: 0, r: -5, block: Basic }
+    - { q: 1, r: -5, block: Basic }
+    - { q: 2, r: -5, block: Basic }
+    - { q: 3, r: -5, block: Basic }
+    - { q: 4, r: -5, block: Basic }
+    - { q: 5, r: -5, block: Basic }
+    - { q: 6, r: -5, block: Basic }
+    # second row
+    - { q: -2, r: -4, block: Basic }
+    - { q: -1, r: -4, block: Basic }
+    - { q: 0, r: -4, block: Basic }
+    - { q: 1, r: -4, block: Basic }
+    - { q: 2, r: -4, block: Basic }
+    - { q: 3, r: -4, block: Basic }
+    - { q: 4, r: -4, block: Basic }
+    - { q: 5, r: -4, block: Basic }
+    - { q: 6, r: -4, block: Basic }
+    # third row
+    - { q: -3, r: -3, block: Basic }
+    - { q: -2, r: -3, block: Basic }
+    - { q: -1, r: -3, block: Basic }
+    - { q: 0, r: -3, block: Basic }
+    - { q: 1, r: -3, block: Basic }
+    - { q: 2, r: -3, block: Basic }
+    - { q: 3, r: -3, block: Basic }
+    - { q: 4, r: -3, block: Basic }
+    - { q: 5, r: -3, block: Basic }
+    - { q: 6, r: -3, block: Basic }
+    # fourth row
+    - { q: -4, r: -2, block: Basic }
+    - { q: -3, r: -2, block: Basic }
+    - { q: -2, r: -2, block: Basic }
+    - { q: -1, r: -2, block: Basic }
+    - { q: 0, r: -2, block: Basic }
+    - { q: 1, r: -2, block: Basic }
+    - { q: 2, r: -2, block: Basic }
+    - { q: 3, r: -2, block: Basic }
+    - { q: 4, r: -2, block: Basic }
+    - { q: 5, r: -2, block: Basic }
+    - { q: 6, r: -2, block: Basic }
+    # fifth row
+    - { q: -5, r: -1, block: Basic }
+    - { q: -4, r: -1, block: Basic }
+    - { q: -3, r: -1, block: Basic }
+    - { q: -2, r: -1, block: Basic }
+    - { q: -1, r: -1, block: Basic }
+    - { q: 0, r: -1, block: Basic }
+    - { q: 1, r: -1, block: Basic }
+    - { q: 2, r: -1, block: Basic }
+    - { q: 3, r: -1, block: Basic }
+    - { q: 4, r: -1, block: Basic }
+    - { q: 5, r: -1, block: Basic }
+    - { q: 6, r: -1, block: Basic }
+    # sixth row
+    - { q: -6, r: 0, block: Basic }
+    - { q: -5, r: 0, block: Basic }
+    - { q: -4, r: 0, block: Basic }
+    - { q: -3, r: 0, block: Basic }
+    - { q: -2, r: 0, block: Basic }
+    - { q: -1, r: 0, block: Basic }
+    - { q: 0, r: 0, block: Basic }
+    - { q: 1, r: 0, block: Basic }
+    - { q: 2, r: 0, block: Basic }
+    - { q: 3, r: 0, block: Basic }
+    - { q: 4, r: 0, block: Basic }
+    - { q: 5, r: 0, block: Basic }
+    - { q: 6, r: 0, block: Basic }
+    # seventh row
+    - { q: -6, r: 1, block: Basic }
+    - { q: -5, r: 1, block: Basic }
+    - { q: -4, r: 1, block: Basic }
+    - { q: -3, r: 1, block: Basic }
+    - { q: -2, r: 1, block: Basic }
+    - { q: -1, r: 1, block: Basic }
+    - { q: 0, r: 1, block: Basic }
+    - { q: 1, r: 1, block: Basic }
+    - { q: 2, r: 1, block: Basic }
+    - { q: 3, r: 1, block: Basic }
+    - { q: 4, r: 1, block: Basic }
+    - { q: 5, r: 1, block: Basic }
+    # eight row
+    - { q: -6, r: 2, block: Basic }
+    - { q: -5, r: 2, block: Basic }
+    - { q: -4, r: 2, block: Basic }
+    - { q: -3, r: 2, block: Basic }
+    - { q: -2, r: 2, block: Basic }
+    - { q: -1, r: 2, block: Basic }
+    - { q: 0, r: 2, block: Basic }
+    - { q: 1, r: 2, block: Basic }
+    - { q: 2, r: 2, block: Basic }
+    - { q: 3, r: 2, block: Basic }
+    - { q: 4, r: 2, block: Basic }
+    # ninth row
+    - { q: -6, r: 3, block: Basic }
+    - { q: -5, r: 3, block: Basic }
+    - { q: -4, r: 3, block: Basic }
+    - { q: -3, r: 3, block: Basic }
+    - { q: -2, r: 3, block: Basic }
+    - { q: -1, r: 3, block: Basic }
+    - { q: 0, r: 3, block: Basic }
+    - { q: 1, r: 3, block: Basic }
+    - { q: 2, r: 3, block: Basic }
+    - { q: 3, r: 3, block: Basic }
+    # tenth row
+    - { q: -6, r: 4, block: Basic }
+    - { q: -5, r: 4, block: Basic }
+    - { q: -4, r: 4, block: Basic }
+    - { q: -3, r: 4, block: Basic }
+    - { q: -2, r: 4, block: Basic }
+    - { q: -1, r: 4, block: Basic }
+    - { q: 0, r: 4, block: Basic }
+    - { q: 1, r: 4, block: Basic }
+    - { q: 2, r: 4, block: Basic }
+    # eleventh row
+    - { q: -6, r: 5, block: Basic }
+    - { q: -5, r: 5, block: Basic }
+    - { q: -4, r: 5, block: Basic }
+    - { q: -3, r: 5, block: Basic }
+    - { q: -2, r: 5, block: Basic }
+    - { q: -1, r: 5, block: Basic }
+    - { q: 0, r: 5, block: Basic }
+    - { q: 1, r: 5, block: Basic }

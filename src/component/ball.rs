@@ -10,6 +10,7 @@ pub struct Ball {
     pub vx: f32,
     pub vy: f32,
     pub r: f32,
+    mesh: Option<graphics::Mesh>,
 }
 
 impl Ball {
@@ -21,6 +22,7 @@ impl Ball {
             vx: rng.gen::<f32>() * 3.0 - 1.5,
             vy: -5.0,
             r: 3.0,
+            mesh: None,
         }
     }
     pub fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
@@ -43,24 +45,41 @@ impl VisualComponent for Ball {
         }
         None
     }
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if self.mesh == None {
+            self.mesh = self.create_mesh(ctx);
+        }
         self.x += self.vx;
         self.y += self.vy;
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
-        let circle = graphics::Mesh::new_circle(
-            ctx,
-            graphics::DrawMode::fill(),
-            mint::Point2 {
-                x: self.x,
-                y: self.y,
-            },
-            self.r,
-            0.1,
-            graphics::WHITE,
-        )?;
-        graphics::draw(ctx, &circle, graphics::DrawParam::default())?;
+        if let Some(circle) = &self.mesh {
+            graphics::draw(
+                ctx,
+                circle,
+                ggez::graphics::DrawParam::from((
+                    mint::Point2 {
+                        x: self.x,
+                        y: self.y,
+                    },
+                    graphics::WHITE,
+                )),
+            )?;
+        }
         Ok(())
+    }
+    fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
+        Some(
+            graphics::Mesh::new_circle(
+                ctx,
+                graphics::DrawMode::fill(),
+                mint::Point2 { x: 0.0, y: 0.0 },
+                self.r,
+                0.1,
+                graphics::WHITE,
+            )
+            .unwrap(),
+        )
     }
 }

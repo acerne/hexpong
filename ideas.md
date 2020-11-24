@@ -91,24 +91,24 @@ These can handicap or reward the game/player for a fixed amount of seconds, some
   - *Performs a random event of other blocks, introduced somehow with a spinning wheel*
 
 ## Code structure, Objects & Features
-- Scoring
+- [ ] Scoring
   - *Scoring system - important to keep the balancing and fun in mind.*
   - *Highscore tracking.*
-- Color themes
+- [ ] Color themes
   - *Different color themes of neon-like variety*
-- Main menu
+- [ ] Main menu
   - *To select game mode/type, set options and such...*
-- Background
+- [ ] Background
   - *Some animation to break the monotony.*
-- Levels
+- [ ] Levels
   - *Different types of level layouts, predetermined block layout.*
-- Meshes
+- [x] Meshes
   - *Should work towars meshes only being created once and repeated over the frame, instead of creating and drawing it every time.*
-- File configuration
+- [x] File configuration
   - *Ability to define levels and game configurations in a file path. Likely a json or yaml file.*
-- Sound effects
+- [ ] Sound effects
   - *Hits, special blocks, actions/handicaps, countdowns...*
-- Textures
+- [ ] Textures
   - *Special blocks are to be textured instead just being different color.*
-- Mouse input
+- [ ] Mouse input
   - *Support for mouse control input.*

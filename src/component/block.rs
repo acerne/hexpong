@@ -30,33 +30,29 @@ pub struct Hexagon {
     pub r: f32,
     pub phi: f32,
     pub block_type: BlockType,
+    mesh: Option<graphics::Mesh>,
 }
 
 impl Hexagon {
+    pub fn new(x: f32, y: f32, r: f32, block_type: BlockType) -> Self {
+        Hexagon {
+            x: x,
+            y: y,
+            r: r,
+            phi: 0.0,
+            block_type: block_type,
+            mesh: None,
+        }
+    }
     pub fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
         let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
         for i in 0..6 {
             let angle = (self.phi + 30.0 + i as f32 * 60.0).to_radians();
-            let xh = angle.cos() * self.r + self.x;
-            let yh = angle.sin() * self.r + self.y;
+            let xh = angle.cos() * self.r;
+            let yh = angle.sin() * self.r;
             vertices[i] = mint::Point2 { x: xh, y: yh };
         }
         vertices
-    }
-    pub fn draw_trace(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        let vertices = self.get_vertices();
-        let trace = ggez::graphics::Mesh::new_polygon(
-            ctx,
-            ggez::graphics::DrawMode::stroke(3.0),
-            &vertices,
-            [0.8, 0.8, 0.8, 0.6].into(),
-        )?;
-        ggez::graphics::draw(
-            ctx,
-            &trace,
-            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-        )?;
-        Ok(())
     }
     pub fn hit(&mut self) -> bool {
         match self.block_type {
@@ -86,23 +82,43 @@ impl VisualComponent for Hexagon {
         }
         None
     }
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if self.mesh == None {
+            self.mesh = self.create_mesh(ctx);
+        }
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
-        let vertices = self.get_vertices();
-        let polygon = graphics::Mesh::new_polygon(
-            ctx,
-            graphics::DrawMode::fill(),
-            &vertices,
-            theme.get_block_color(&self.block_type),
-        )?;
-        graphics::draw(
-            ctx,
-            &polygon,
-            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-        )?;
+        if let Some(polygon) = &self.mesh {
+            graphics::draw(
+                ctx,
+                polygon,
+                ggez::graphics::DrawParam::from((
+                    mint::Point2 {
+                        x: self.x,
+                        y: self.y,
+                    },
+                    theme.get_block_color(&self.block_type),
+                )),
+            )?;
+        }
         Ok(())
+    }
+    fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
+        let vertices = self.get_vertices();
+        Some(
+            graphics::MeshBuilder::new()
+                .polygon(graphics::DrawMode::fill(), &vertices, graphics::WHITE)
+                .unwrap()
+                .polygon(
+                    ggez::graphics::DrawMode::stroke(3.0),
+                    &vertices,
+                    [0.8, 0.8, 0.8, 0.6].into(),
+                )
+                .unwrap()
+                .build(ctx)
+                .unwrap(),
+        )
     }
 }
 

@@ -12,6 +12,7 @@ pub struct Wall {
     pub y2: f32,
     pub thickness: f32,
     pub side: gamemode::Side,
+    mesh: Option<graphics::Mesh>,
 }
 
 impl Wall {
@@ -26,6 +27,7 @@ impl Wall {
             y2: settings::ORIGIN.1 + settings::HEXAGON_SIZE * theta_rad.sin(),
             thickness: 5.0, // TODO: relative
             side: side.clone(),
+            mesh: None,
         }
     }
 }
@@ -42,30 +44,40 @@ impl VisualComponent for Wall {
         }
         None
     }
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if self.mesh == None {
+            self.mesh = self.create_mesh(ctx);
+        }
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
-        let line = graphics::Mesh::new_line(
-            ctx,
-            &[
-                mint::Point2 {
-                    x: self.x1,
-                    y: self.y1,
-                },
-                mint::Point2 {
-                    x: self.x2,
-                    y: self.y2,
-                },
-            ],
-            self.thickness,
-            theme.wall,
-        )?;
-        graphics::draw(
-            ctx,
-            &line,
-            ggez::graphics::DrawParam::from((ggez::mint::Point2 { x: 0.0, y: 0.0 },)),
-        )?;
+        if let Some(line) = &self.mesh {
+            graphics::draw(
+                ctx,
+                line,
+                ggez::graphics::DrawParam::from((mint::Point2 { x: 0.0, y: 0.0 }, theme.wall)),
+            )?;
+        }
         Ok(())
+    }
+    fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
+        Some(
+            graphics::Mesh::new_line(
+                ctx,
+                &[
+                    mint::Point2 {
+                        x: self.x1,
+                        y: self.y1,
+                    },
+                    mint::Point2 {
+                        x: self.x2,
+                        y: self.y2,
+                    },
+                ],
+                self.thickness,
+                graphics::WHITE,
+            )
+            .unwrap(),
+        )
     }
 }

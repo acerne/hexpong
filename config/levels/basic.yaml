@@ -1,7 +1,7 @@
 level:
   name: "Basic"
   shape: Hexagonal
-  size: 7
+  block-size: 0.06
   blocks:
     # first row
     - { q: 0, r: -3, block: Basic }
