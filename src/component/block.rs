@@ -14,11 +14,11 @@ pub enum BlockType {
 
 impl BlockType {
     pub fn from_str(input: &str) -> BlockType {
-        match input {
-            "Basic" => BlockType::Basic,
-            "Basic2" => BlockType::Basic2,
-            "Basic3" => BlockType::Basic3,
-            "Immortal" => BlockType::Immortal,
+        match &input.to_lowercase()[..] {
+            "basic" => BlockType::Basic,
+            "basic2" => BlockType::Basic2,
+            "basic3" => BlockType::Basic3,
+            "immortal" => BlockType::Immortal,
             _ => panic!("Invalid block shape"),
         }
     }

@@ -4,6 +4,7 @@ use ggez::event::{KeyCode, KeyMods};
 use ggez::{graphics, Context, GameResult};
 
 mod component;
+mod gamemode;
 mod levels;
 mod settings;
 mod themes;
@@ -30,6 +31,7 @@ impl Default for InputState {
 
 struct GameState {
     players: Vec<component::player::Player>,
+    walls: Vec<component::wall::Wall>,
     level: levels::Level,
     balls: Vec<component::ball::Ball>,
     theme: themes::Theme,
@@ -37,51 +39,40 @@ struct GameState {
 
 impl GameState {
     pub fn new() -> Self {
-        let mut players = Vec::new();
-        for p in 0..settings::NUMBER_PLAYERS {
-            let mut bars = Vec::new();
-            for ang in (p..6).step_by(settings::NUMBER_PLAYERS) {
-                bars.push(component::player::Bar {
-                    pos: 0.5,
-                    xc: 0.0,
-                    yc: 0.0,
-                    l1: settings::BAR_SIZE.0 / 2.0,
-                    l2: settings::BAR_SIZE.1 / 2.0,
-                    phi: ang as f32 * 60.0,
-                    color: graphics::Color::new(
-                        if p == 0 { 1.0 } else { 0.0 },
-                        if p == 1 { 1.0 } else { 0.0 },
-                        if p == 2 { 1.0 } else { 0.0 },
-                        1.0,
-                    ),
-                });
-            }
-            players.push(component::player::Player {
-                barpos: 0.5,
-                bars: bars,
-                input: InputState::default(),
-            });
-        }
+        let mode = gamemode::GameMode::new(
+            "config/gamemodes/arcade-singleplayer.yaml",
+            gamemode::Difficulty::Hard,
+        );
         GameState {
-            players: players,
-            level: levels::Level::new(String::from("levels/armored.yaml")),
+            players: mode.players,
+            walls: mode.walls,
+            level: levels::Level::new(String::from("config/levels/armored.yaml")),
             balls: vec![component::ball::Ball::new()],
-            theme: themes::Theme::new(String::from("themes/base.yaml")),
+            theme: themes::Theme::new(String::from("config/themes/base.yaml")),
         }
     }
 
     fn collision(&mut self) {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
-            // ball colliding with walls
+            // ball going out of sight
             if ball.x < 0.0
                 || ball.y < 0.0
                 || ball.x > settings::SCREEN_SIZE.0
                 || ball.y > settings::SCREEN_SIZE.1
             {
-                // hit - respanw ball
+                // respanw ball
                 balls_lost.push(ball_index);
                 break;
+            }
+
+            // ball colliding with walls
+            for wall in self.walls.iter() {
+                let collision = wall.collision(&ball);
+                if let Some(norm_vec) = collision {
+                    ball.bounce_away(&norm_vec);
+                    break;
+                }
             }
 
             // ball colliding with bars
@@ -164,6 +155,9 @@ impl event::EventHandler for GameState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, self.theme.background);
         self.level.draw(ctx, &self.theme)?;
+        for wall in self.walls.iter() {
+            wall.draw(ctx, &self.theme)?;
+        }
         for player in self.players.iter() {
             player.draw(ctx, &self.theme)?;
         }
@@ -173,7 +167,6 @@ impl event::EventHandler for GameState {
         graphics::present(ctx)?;
         Ok(())
     }
-
     fn key_down_event(
         &mut self,
         _ctx: &mut Context,

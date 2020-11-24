@@ -1,0 +1,49 @@
+level:
+  name: "Reinforced"
+  shape: Hexagonal
+  size: 7
+  blocks:
+    # first row
+    - { q: 0, r: -3, block: Basic2 }
+    - { q: 1, r: -3, block: Basic2 }
+    - { q: 2, r: -3, block: Basic2 }
+    - { q: 3, r: -3, block: Basic2 }
+    # second row
+    - { q: -1, r: -2, block: Basic2 }
+    - { q: 0, r: -2, block: Basic }
+    - { q: 1, r: -2, block: Basic }
+    - { q: 2, r: -2, block: Basic }
+    - { q: 3, r: -2, block: Basic2 }
+    # third row
+    - { q: -2, r: -1, block: Basic2 }
+    - { q: -1, r: -1, block: Basic }
+    - { q: 0, r: -1, block: Basic }
+    - { q: 1, r: -1, block: Basic }
+    - { q: 2, r: -1, block: Basic }
+    - { q: 3, r: -1, block: Basic2 }
+    # fourth row
+    - { q: -3, r: 0, block: Basic2 }
+    - { q: -2, r: 0, block: Basic }
+    - { q: -1, r: 0, block: Basic }
+    - { q: 0, r: 0, block: Basic }
+    - { q: 1, r: 0, block: Basic }
+    - { q: 2, r: 0, block: Basic }
+    - { q: 3, r: 0, block: Basic2 }
+    # fifth row
+    - { q: -3, r: 1, block: Basic2 }
+    - { q: -2, r: 1, block: Basic }
+    - { q: -1, r: 1, block: Basic }
+    - { q: 0, r: 1, block: Basic }
+    - { q: 1, r: 1, block: Basic }
+    - { q: 2, r: 1, block: Basic2 }
+    # sixth row
+    - { q: -3, r: 2, block: Basic2 }
+    - { q: -2, r: 2, block: Basic }
+    - { q: -1, r: 2, block: Basic }
+    - { q: 0, r: 2, block: Basic }
+    - { q: 1, r: 2, block: Basic2 }
+    # seventh row
+    - { q: -3, r: 3, block: Basic2 }
+    - { q: -2, r: 3, block: Basic2 }
+    - { q: -1, r: 3, block: Basic2 }
+    - { q: 0, r: 3, block: Basic2 }

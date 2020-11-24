@@ -1,5 +1,5 @@
 level:
-  name: Basic
+  name: "Basic"
   shape: Hexagonal
   size: 7
   blocks:

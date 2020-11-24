@@ -1,4 +1,5 @@
 use crate::component::ball;
+use crate::gamemode;
 use crate::settings;
 use crate::themes;
 use crate::InputState;
@@ -8,21 +9,30 @@ use ggez::*;
 pub struct Player {
     pub barpos: f32,
     pub bars: Vec<Bar>,
+    pub bar_size: f32,
     pub input: InputState,
 }
 
 impl Player {
+    pub fn new(bar_size: f32) -> Self {
+        Player {
+            barpos: 0.5,
+            bar_size: bar_size,
+            bars: Vec::new(),
+            input: InputState::default(),
+        }
+    }
     pub fn update(&mut self, ctx: &mut Context) -> GameResult {
         if self.input.left {
             self.barpos -= 0.03; // TODO as parameter
         } else if self.input.right {
             self.barpos += 0.03;
         }
-        if self.barpos < (0.0 + settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0) {
-            self.barpos = 0.0 + settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0;
+        if self.barpos < (0.0 + self.bar_size / 2.0) {
+            self.barpos = 0.0 + self.bar_size / 2.0;
         }
-        if self.barpos > (1.0 - settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0) {
-            self.barpos = 1.0 - settings::BAR_SIZE.0 / settings::HEXAGON_SIZE / 2.0;
+        if self.barpos > (1.0 - self.bar_size / 2.0) {
+            self.barpos = 1.0 - self.bar_size / 2.0;
         }
         for bar in self.bars.iter_mut() {
             bar.pos = self.barpos;
@@ -47,14 +57,24 @@ pub struct Bar {
     pub l1: f32, // w/2
     pub l2: f32, // h/2
     pub phi: f32,
-    pub color: graphics::Color,
+    pub side: gamemode::Side,
 }
 
 impl Bar {
+    pub fn new(side: &gamemode::Side, bar_size: f32) -> Self {
+        Bar {
+            pos: 0.5,
+            xc: 0.0,
+            yc: 0.0,
+            l1: settings::HEXAGON_SIZE / 2.0 * bar_size,
+            l2: 5.0,
+            phi: side.to_ang() - 60.0,
+            side: side.clone(),
+        }
+    }
     fn get_vertices(&self) -> [mint::Point2<f32>; 4] {
         let mut vertices: [mint::Point2<f32>; 4] = [mint::Point2 { x: 0.0, y: 0.0 }; 4];
-
-        let phi = self.phi.to_radians();
+        let phi = (self.side.to_ang() - 60.0).to_radians();
 
         let long_cos = self.l1 * phi.cos();
         let long_sin = self.l1 * phi.sin();
@@ -76,7 +96,7 @@ impl Bar {
 
 impl VisualComponent for Bar {
     fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
-        let phi = (-self.phi).to_radians();
+        let phi = -(self.side.to_ang() - 60.0).to_radians();
         let tx = (ball.x - self.xc) * phi.cos() + (ball.y - self.yc) * phi.sin();
         let ty = -(ball.x - self.xc) * phi.sin() + (ball.y - self.yc) * phi.cos();
         if tx > -self.l1 && tx < self.l1 && ty > -self.l2 && ty < self.l2 {
@@ -111,7 +131,7 @@ impl VisualComponent for Bar {
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
         let vertices = self.get_vertices();
         let polygon =
-            graphics::Mesh::new_polygon(ctx, graphics::DrawMode::fill(), &vertices, self.color)?;
+            graphics::Mesh::new_polygon(ctx, graphics::DrawMode::fill(), &vertices, theme.player1)?; // TODO: different players
         graphics::draw(
             ctx,
             &polygon,

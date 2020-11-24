@@ -1,5 +1,5 @@
 level:
-  name: Basic
+  name: "Hard Boiled"
   shape: Hexagonal
   size: 7
   blocks:

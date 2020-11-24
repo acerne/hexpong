@@ -1,0 +1,36 @@
+gamemode:
+  name: "Arcade"
+  type: "Singleplayer"
+  difficulty:
+    easy:
+      bar-size: 0.3
+      controls:
+        bottom: { input: "Player1", direction: "Normal" }
+        bottom-left: { input: "Wall" }
+        bottom-right: { input: "Wall" }
+        top: { input: "Player1", direction: "Reversed" }
+        top-left: { input: "Wall" }
+        top-right: { input: "Wall" }
+    normal:
+      bar-size: 0.2
+      controls:
+        bottom: { input: "Player1", direction: "Normal" }
+        bottom-left: { input: "Wall" }
+        bottom-right: { input: "Wall" }
+        top: { input: "Wall" }
+        top-left: { input: "Player1", direction: "Normal" }
+        top-right: { input: "Player1", direction: "Normal" }
+    hard:
+      bar-size: 0.2
+      controls:
+        bottom: { input: "Player1", direction: "Normal" }
+        bottom-left: { input: "Player1", direction: "Reversed" }
+        bottom-right: { input: "Player1", direction: "Reversed" }
+        top: { input: "Player1", direction: "Reversed" }
+        top-left: { input: "Player1", direction: "Normal" }
+        top-right: { input: "Player1", direction: "Normal" }
+  levels:
+    - level1: "config/levels/basic.yaml"
+    - level2: "config/levels/armored.yaml"
+    - level3: "config/levels/hard-boiled.yaml"
+    - level4: "config/levels/obstacle-course.yaml"

@@ -21,7 +21,6 @@ impl Theme {
         f.read_to_string(&mut contents)
             .expect("Unable to read theme file");
         let yaml = &YamlLoader::load_from_str(&contents).unwrap()[0]["theme"];
-        println!("{:?}", yaml);
         Theme {
             background: decode_color(
                 yaml["background"]
