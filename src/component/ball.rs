@@ -80,6 +80,25 @@ impl VisualComponent for Ball {
                     graphics::WHITE,
                 )),
             )?;
+            let text = ggez::graphics::Text::new(format!(
+                "Speed: {}\nDirection: {}",
+                self.speed,
+                self.direction.to_degrees()
+            ));
+            graphics::draw(
+                ctx,
+                &text,
+                ggez::graphics::DrawParam::from((
+                    mint::Point2 {
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.x + 10.0),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.y),
+                    },
+                    0.0,
+                    mint::Point2 { x: 0.0, y: 0.0 },
+                    mint::Vector2 { x: 1.0, y: 1.0 },
+                    [1.0, 0.0, 0.0, 1.0].into(),
+                )),
+            )?;
         }
         Ok(())
     }
