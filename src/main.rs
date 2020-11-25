@@ -35,6 +35,7 @@ struct GameState {
     walls: Vec<component::wall::Wall>,
     level: levels::Level,
     balls: Vec<component::ball::Ball>,
+    ball_speed: f32,
     theme: themes::Theme,
 }
 
@@ -47,8 +48,9 @@ impl GameState {
         GameState {
             players: mode.players,
             walls: mode.walls,
+            ball_speed: mode.ball_speed,
             level: levels::Level::new(String::from("config/levels/crowded.yaml")),
-            balls: vec![component::ball::Ball::new()],
+            balls: vec![component::ball::Ball::new(mode.ball_speed)],
             theme: themes::Theme::new(String::from("config/themes/base.yaml")),
         }
     }
@@ -110,7 +112,7 @@ impl GameState {
             }
         }
         if self.balls.is_empty() {
-            self.balls.push(component::ball::Ball::new());
+            self.balls.push(component::ball::Ball::new(self.ball_speed));
         }
     }
 

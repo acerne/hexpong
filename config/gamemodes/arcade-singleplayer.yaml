@@ -4,6 +4,7 @@ gamemode:
   difficulty:
     easy:
       bar-size: 0.3
+      ball-speed: 0.01
       controls:
         bottom: { input: "Player1", direction: "Normal" }
         bottom-left: { input: "Wall" }
@@ -13,15 +14,17 @@ gamemode:
         top-right: { input: "Wall" }
     normal:
       bar-size: 0.2
+      ball-speed: 0.012
       controls:
         bottom: { input: "Player1", direction: "Normal" }
         bottom-left: { input: "Wall" }
         bottom-right: { input: "Wall" }
         top: { input: "Wall" }
-        top-left: { input: "Player1", direction: "Normal" }
-        top-right: { input: "Player1", direction: "Normal" }
+        top-left: { input: "Player1", direction: "Reversed" }
+        top-right: { input: "Player1", direction: "Reversed" }
     hard:
       bar-size: 0.2
+      ball-speed: 0.015
       controls:
         bottom: { input: "Player1", direction: "Normal" }
         bottom-left: { input: "Player1", direction: "Reversed" }

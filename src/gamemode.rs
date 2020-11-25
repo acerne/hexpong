@@ -32,6 +32,7 @@ pub struct GameMode {
     pub players: Vec<controller::Controller>,
     pub walls: Vec<wall::Wall>,
     pub levels: Vec<levels::Level>,
+    pub ball_speed: f32,
 }
 
 impl GameMode {
@@ -45,6 +46,10 @@ impl GameMode {
         let bar_size = yaml["difficulty"][difficulty.to_str()]["bar-size"]
             .as_f64()
             .expect("Missing bar-size property") as f32;
+
+        let ball_speed = yaml["difficulty"][difficulty.to_str()]["ball-speed"]
+            .as_f64()
+            .expect("Missing ball-speed property") as f32;
 
         let mut players = Vec::new();
         let mut walls = Vec::new();
@@ -115,6 +120,7 @@ impl GameMode {
         GameMode {
             players: players,
             walls: walls,
+            ball_speed: ball_speed,
             levels: Vec::new(),
         }
     }

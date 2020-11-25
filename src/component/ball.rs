@@ -14,14 +14,14 @@ pub struct Ball {
 }
 
 impl Ball {
-    pub fn new() -> Self {
+    pub fn new(ball_speed: f32) -> Self {
         let mut rng = rand::thread_rng();
         let var = (rng.gen::<f32>() - 0.5) * 20.0;
 
         Ball {
             x: settings::BALL_SPAWN.0,
             y: settings::BALL_SPAWN.1,
-            velocity: settings::norm_to_unit(0.01),
+            velocity: settings::norm_to_unit(ball_speed),
             direction: (270.0 + var).to_radians(),
             r: settings::norm_to_unit(0.01),
             mesh: None,
