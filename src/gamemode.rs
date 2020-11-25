@@ -1,4 +1,4 @@
-use crate::component::player;
+use crate::component::controller;
 use crate::component::wall;
 use crate::levels;
 use std::fs::File;
@@ -11,7 +11,7 @@ pub enum Difficulty {
     Hard,
 }
 
-pub enum Controller {
+pub enum Controls {
     Player1,
     Player2,
     Player3,
@@ -29,7 +29,7 @@ pub enum Side {
 }
 
 pub struct GameMode {
-    pub players: Vec<player::Player>,
+    pub players: Vec<controller::Controller>,
     pub walls: Vec<wall::Wall>,
     pub levels: Vec<levels::Level>,
 }
@@ -48,7 +48,9 @@ impl GameMode {
 
         let mut players = Vec::new();
         let mut walls = Vec::new();
-        let mut player1 = player::Player::new(bar_size);
+        let mut player1 = controller::Controller::new(bar_size, controller::Player::Player1);
+        let mut player2 = controller::Controller::new(bar_size, controller::Player::Player2);
+        let mut player3 = controller::Controller::new(bar_size, controller::Player::Player3);
 
         for side in [
             Side::Bottom,
@@ -63,13 +65,47 @@ impl GameMode {
             let input = yaml["difficulty"][difficulty.to_str()]["controls"][side.to_str()]["input"]
                 .as_str()
                 .expect("Missing or invalid difficulty configuration");
-            match Controller::from_str(input) {
-                Controller::Player1 => {
-                    player1.bars.push(player::Bar::new(side, bar_size));
+            match Controls::from_str(input) {
+                Controls::Player1 => {
+                    player1.bars.push(controller::Bar::new(
+                        side,
+                        bar_size,
+                        controller::Player::Player1,
+                        parse_direction(
+                            yaml["difficulty"][difficulty.to_str()]["controls"][side.to_str()]
+                                ["direction"]
+                                .as_str()
+                                .expect("Missing or invalid difficulty configuration"),
+                        ),
+                    ));
                 }
-                Controller::Player2 => {}
-                Controller::Player3 => {}
-                Controller::Wall => {
+                Controls::Player2 => {
+                    player2.bars.push(controller::Bar::new(
+                        side,
+                        bar_size,
+                        controller::Player::Player2,
+                        parse_direction(
+                            yaml["difficulty"][difficulty.to_str()]["controls"][side.to_str()]
+                                ["direction"]
+                                .as_str()
+                                .expect("Missing or invalid difficulty configuration"),
+                        ),
+                    ));
+                }
+                Controls::Player3 => {
+                    player3.bars.push(controller::Bar::new(
+                        side,
+                        bar_size,
+                        controller::Player::Player3,
+                        parse_direction(
+                            yaml["difficulty"][difficulty.to_str()]["controls"][side.to_str()]
+                                ["direction"]
+                                .as_str()
+                                .expect("Missing or invalid difficulty configuration"),
+                        ),
+                    ));
+                }
+                Controls::Wall => {
                     walls.push(wall::Wall::new(side));
                 }
             }
@@ -84,15 +120,23 @@ impl GameMode {
     }
 }
 
-impl Controller {
-    pub fn from_str(input: &str) -> Controller {
+impl Controls {
+    pub fn from_str(input: &str) -> Controls {
         match &input.to_lowercase()[..] {
-            "player1" => Controller::Player1,
-            "player2" => Controller::Player2,
-            "player3" => Controller::Player3,
-            "wall" => Controller::Wall,
-            _ => panic!("Invalid controller"),
+            "player1" => Controls::Player1,
+            "player2" => Controls::Player2,
+            "player3" => Controls::Player3,
+            "wall" => Controls::Wall,
+            _ => panic!("Invalid controls"),
         }
+    }
+}
+
+fn parse_direction(input: &str) -> bool {
+    match &input.to_lowercase()[..] {
+        "normal" => false,
+        "reversed" => true,
+        _ => panic!("Invalid direction"),
     }
 }
 

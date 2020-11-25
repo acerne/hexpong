@@ -8,7 +8,7 @@ pub struct Ball {
     pub x: f32,
     pub y: f32,
     pub r: f32,
-    pub speed: f32,
+    pub velocity: f32,
     pub direction: f32,
     mesh: Option<graphics::Mesh>,
 }
@@ -21,7 +21,7 @@ impl Ball {
         Ball {
             x: settings::BALL_SPAWN.0,
             y: settings::BALL_SPAWN.1,
-            speed: settings::norm_to_unit(0.01),
+            velocity: settings::norm_to_unit(0.01),
             direction: (270.0 + var).to_radians(),
             r: settings::norm_to_unit(0.01),
             mesh: None,
@@ -29,11 +29,11 @@ impl Ball {
     }
     pub fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
         let veloc_vec = nalgebra::Vector2::new(
-            self.speed * self.direction.cos(),
-            self.speed * self.direction.sin(),
+            self.velocity * self.direction.cos(),
+            self.velocity * self.direction.sin(),
         );
         let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
-        self.speed = (bouce_vec.x.powf(2.0) + bouce_vec.y.powf(2.0)).sqrt();
+        self.velocity = (bouce_vec.x.powf(2.0) + bouce_vec.y.powf(2.0)).sqrt();
         self.direction = bouce_vec.y.atan2(bouce_vec.x);
     }
     fn get_position(&self) -> mint::Point2<f32> {
@@ -60,8 +60,8 @@ impl VisualComponent for Ball {
         if self.mesh == None {
             self.mesh = self.create_mesh(ctx);
         }
-        self.x += self.speed * self.direction.cos();
-        self.y += self.speed * self.direction.sin();
+        self.x += self.velocity * self.direction.cos();
+        self.y += self.velocity * self.direction.sin();
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -81,8 +81,8 @@ impl VisualComponent for Ball {
                 )),
             )?;
             let text = ggez::graphics::Text::new(format!(
-                "Speed: {}\nDirection: {}",
-                self.speed,
+                "vel: {}\ndir: {}",
+                self.velocity,
                 self.direction.to_degrees()
             ));
             graphics::draw(

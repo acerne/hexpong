@@ -31,7 +31,7 @@ impl Default for InputState {
 }
 
 struct GameState {
-    players: Vec<component::player::Player>,
+    players: Vec<component::controller::Controller>,
     walls: Vec<component::wall::Wall>,
     level: levels::Level,
     balls: Vec<component::ball::Ball>,
@@ -42,7 +42,7 @@ impl GameState {
     pub fn new() -> Self {
         let mode = gamemode::GameMode::new(
             "config/gamemodes/arcade-singleplayer.yaml",
-            gamemode::Difficulty::Easy,
+            gamemode::Difficulty::Normal,
         );
         GameState {
             players: mode.players,

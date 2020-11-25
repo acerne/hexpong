@@ -6,20 +6,28 @@ use crate::InputState;
 use crate::VisualComponent;
 use ggez::*;
 
-pub struct Player {
+pub enum Player {
+    Player1,
+    Player2,
+    Player3,
+}
+
+pub struct Controller {
     pub barpos: f32,
     pub bars: Vec<Bar>,
     pub bar_size: f32,
     pub input: InputState,
+    pub player: Player,
 }
 
-impl Player {
-    pub fn new(bar_size: f32) -> Self {
-        Player {
+impl Controller {
+    pub fn new(bar_size: f32, player: Player) -> Self {
+        Controller {
             barpos: 0.5,
             bar_size: bar_size,
             bars: Vec::new(),
             input: InputState::default(),
+            player: player,
         }
     }
     pub fn update(&mut self, ctx: &mut Context) -> GameResult {
@@ -58,10 +66,12 @@ pub struct Bar {
     pub side: gamemode::Side,
     center: mint::Point2<f32>,
     mesh: Option<graphics::Mesh>,
+    owner: Player,
+    reversed: bool,
 }
 
 impl Bar {
-    pub fn new(side: &gamemode::Side, bar_size: f32) -> Self {
+    pub fn new(side: &gamemode::Side, bar_size: f32, owner: Player, reversed: bool) -> Self {
         Bar {
             pos: 0.5,
             l1: settings::norm_to_unit(bar_size) / 2.0,
@@ -70,6 +80,8 @@ impl Bar {
             side: side.clone(),
             center: mint::Point2 { x: 0.0, y: 0.0 },
             mesh: None,
+            owner: owner,
+            reversed: reversed,
         }
     }
     fn get_vertices(&self) -> [mint::Point2<f32>; 4] {
@@ -113,8 +125,12 @@ impl VisualComponent for Bar {
             self.mesh = self.create_mesh(ctx);
         }
 
-        let xc0 = -settings::UNIT_SIZE / 2.0 + self.pos * settings::UNIT_SIZE;
+        let mut xc0 = -settings::UNIT_SIZE / 2.0 + self.pos * settings::UNIT_SIZE;
         let yc0 = 3.0f32.sqrt() / 2.0 * settings::UNIT_SIZE;
+
+        if self.reversed {
+            xc0 = -xc0;
+        }
 
         let phi = self.phi.to_radians();
 
@@ -137,7 +153,11 @@ impl VisualComponent for Bar {
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
                     settings::get_scale_vector(),
-                    theme.player1,
+                    match self.owner {
+                        Player::Player1 => theme.player1,
+                        Player::Player2 => theme.player2,
+                        Player::Player3 => theme.player3,
+                    },
                 )),
             )?;
         }
