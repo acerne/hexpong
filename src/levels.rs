@@ -1,5 +1,4 @@
 use crate::component::block;
-use crate::settings;
 use crate::themes;
 use crate::VisualComponent;
 use ggez::*;

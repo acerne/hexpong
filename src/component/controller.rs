@@ -3,7 +3,8 @@ use crate::gamemode;
 use crate::settings;
 use crate::themes;
 use crate::InputState;
-use crate::VisualComponent;
+use crate::{AudibleComponent, VisualComponent};
+use ggez::audio::*;
 use ggez::*;
 
 pub enum Player {
@@ -174,5 +175,14 @@ impl VisualComponent for Bar {
             )
             .unwrap(),
         )
+    }
+}
+
+impl AudibleComponent for Bar {
+    fn play_sound(&self, ctx: &mut Context) {
+        ggez::audio::Source::new(ctx, "/back_003.ogg")
+            .unwrap()
+            .play_detached()
+            .unwrap();
     }
 }

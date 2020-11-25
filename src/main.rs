@@ -1,13 +1,17 @@
 use ggez::*;
 
 use ggez::event::{KeyCode, KeyMods};
-use ggez::{graphics, Context, GameResult};
+use ggez::{audio, graphics, Context, GameResult};
 
 mod component;
 mod gamemode;
 mod levels;
 mod settings;
 mod themes;
+
+trait AudibleComponent {
+    fn play_sound(&self, ctx: &mut Context);
+}
 
 trait VisualComponent {
     fn collision(&self, ball: &component::ball::Ball) -> Option<nalgebra::Vector2<f32>>;
@@ -43,7 +47,7 @@ impl GameState {
     pub fn new() -> Self {
         let mode = gamemode::GameMode::new(
             "config/gamemodes/arcade-singleplayer.yaml",
-            gamemode::Difficulty::Normal,
+            gamemode::Difficulty::Easy,
         );
         GameState {
             players: mode.players,
@@ -55,7 +59,7 @@ impl GameState {
         }
     }
 
-    fn collision(&mut self) {
+    fn collision(&mut self, ctx: &mut Context) {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
             // ball going out of sight
@@ -73,6 +77,7 @@ impl GameState {
             for wall in self.walls.iter() {
                 let collision = wall.collision(&ball);
                 if let Some(norm_vec) = collision {
+                    wall.play_sound(ctx);
                     ball.bounce_away(&norm_vec);
                     break;
                 }
@@ -83,6 +88,7 @@ impl GameState {
                 for bar in player.bars.iter() {
                     let collision = bar.collision(&ball);
                     if let Some(norm_vec) = collision {
+                        bar.play_sound(ctx);
                         ball.bounce_away(&norm_vec);
                         break;
                     }
@@ -94,6 +100,7 @@ impl GameState {
             for (hexagon_index, hexagon) in self.level.blocks.iter().enumerate() {
                 let collision = hexagon.collision(&ball);
                 if let Some(norm_vec) = collision {
+                    hexagon.play_sound(ctx);
                     ball.bounce_away(&norm_vec);
                     block_hit = hexagon_index;
                     break;
@@ -158,7 +165,7 @@ impl event::EventHandler for GameState {
         for wall in self.walls.iter_mut() {
             wall.update(ctx)?
         }
-        self.collision();
+        self.collision(ctx);
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -192,12 +199,21 @@ impl event::EventHandler for GameState {
 }
 
 fn main() -> GameResult {
+    let resource_dir = if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        let mut path = std::path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        path
+    } else {
+        std::path::PathBuf::from("./resources")
+    };
+
     let (ctx, events_loop) = &mut ggez::ContextBuilder::new("hexpong", "acerne")
         .window_setup(ggez::conf::WindowSetup::default().title("HexPong"))
         .window_mode(
             ggez::conf::WindowMode::default()
                 .dimensions(settings::SCREEN_SIZE.0, settings::SCREEN_SIZE.1),
         )
+        .add_resource_path(resource_dir)
         .build()?;
 
     let state = &mut GameState::new();

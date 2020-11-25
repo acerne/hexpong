@@ -2,7 +2,8 @@ use crate::component::ball;
 use crate::gamemode;
 use crate::settings;
 use crate::themes;
-use crate::VisualComponent;
+use crate::{AudibleComponent, VisualComponent};
+use ggez::audio::*;
 use ggez::*;
 
 pub struct Wall {
@@ -85,5 +86,14 @@ impl VisualComponent for Wall {
             )
             .unwrap(),
         )
+    }
+}
+
+impl AudibleComponent for Wall {
+    fn play_sound(&self, ctx: &mut Context) {
+        ggez::audio::Source::new(ctx, "/impactMetal_medium_003.ogg")
+            .unwrap()
+            .play_detached()
+            .unwrap();
     }
 }

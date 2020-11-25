@@ -1,7 +1,8 @@
 use crate::component::ball;
 use crate::settings;
 use crate::themes;
-use crate::VisualComponent;
+use crate::{AudibleComponent, VisualComponent};
+use ggez::audio::*;
 use ggez::*;
 
 #[derive(PartialEq, Eq, Hash)]
@@ -122,6 +123,15 @@ impl VisualComponent for Hexagon {
                 .build(ctx)
                 .unwrap(),
         )
+    }
+}
+
+impl AudibleComponent for Hexagon {
+    fn play_sound(&self, ctx: &mut Context) {
+        ggez::audio::Source::new(ctx, "/impactGlass_medium_000.ogg")
+            .unwrap()
+            .play_detached()
+            .unwrap();
     }
 }
 
