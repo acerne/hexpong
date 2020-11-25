@@ -7,29 +7,40 @@ use rand::Rng;
 pub struct Ball {
     pub x: f32,
     pub y: f32,
-    pub vx: f32,
-    pub vy: f32,
     pub r: f32,
+    pub speed: f32,
+    pub direction: f32,
     mesh: Option<graphics::Mesh>,
 }
 
 impl Ball {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
+        let var = (rng.gen::<f32>() - 0.5) * 20.0;
+
         Ball {
             x: settings::BALL_SPAWN.0,
             y: settings::BALL_SPAWN.1,
-            vx: rng.gen::<f32>() * 3.0 - 1.5,
-            vy: -5.0,
-            r: 3.0,
+            speed: settings::norm_to_unit(0.01),
+            direction: (270.0 + var).to_radians(),
+            r: settings::norm_to_unit(0.01),
             mesh: None,
         }
     }
     pub fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
-        let veloc_vec = nalgebra::Vector2::new(self.vx, self.vy);
+        let veloc_vec = nalgebra::Vector2::new(
+            self.speed * self.direction.cos(),
+            self.speed * self.direction.sin(),
+        );
         let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
-        self.vx = bouce_vec.x;
-        self.vy = bouce_vec.y;
+        self.speed = (bouce_vec.x.powf(2.0) + bouce_vec.y.powf(2.0)).sqrt();
+        self.direction = bouce_vec.y.atan2(bouce_vec.x);
+    }
+    fn get_position(&self) -> mint::Point2<f32> {
+        mint::Point2 {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 
@@ -49,8 +60,8 @@ impl VisualComponent for Ball {
         if self.mesh == None {
             self.mesh = self.create_mesh(ctx);
         }
-        self.x += self.vx;
-        self.y += self.vy;
+        self.x += self.speed * self.direction.cos();
+        self.y += self.speed * self.direction.sin();
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -60,9 +71,12 @@ impl VisualComponent for Ball {
                 circle,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: self.x,
-                        y: self.y,
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.y),
                     },
+                    0.0,
+                    mint::Point2 { x: 0.0, y: 0.0 },
+                    settings::get_scale_vector(),
                     graphics::WHITE,
                 )),
             )?;

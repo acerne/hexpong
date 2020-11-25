@@ -95,9 +95,12 @@ impl VisualComponent for Hexagon {
                 polygon,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: self.x,
-                        y: self.y,
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.y),
                     },
+                    0.0,
+                    mint::Point2 { x: 0.0, y: 0.0 },
+                    settings::get_scale_vector(),
                     theme.get_block_color(&self.block_type),
                 )),
             )?;
@@ -111,7 +114,7 @@ impl VisualComponent for Hexagon {
                 .polygon(graphics::DrawMode::fill(), &vertices, graphics::WHITE)
                 .unwrap()
                 .polygon(
-                    ggez::graphics::DrawMode::stroke(3.0),
+                    ggez::graphics::DrawMode::stroke(settings::norm_to_unit(0.005)),
                     &vertices,
                     [0.8, 0.8, 0.8, 0.6].into(),
                 )
@@ -134,6 +137,12 @@ impl GridIndex {
         let x = settings::ORIGIN.0
             + (self.q as f32 * 3.0f32.sqrt() + self.r as f32 * (3.0f32.sqrt() / 2.0)) * tile_radius;
         let y = settings::ORIGIN.1 + (3.0 / 2.0 * self.r as f32) * tile_radius;
+        mint::Point2 { x: x, y: y }
+    }
+    pub fn to_unit(&self, tile_radius: f32) -> mint::Point2<f32> {
+        let x =
+            (self.q as f32 * 3.0f32.sqrt() + self.r as f32 * (3.0f32.sqrt() / 2.0)) * tile_radius;
+        let y = (3.0 / 2.0 * self.r as f32) * tile_radius;
         mint::Point2 { x: x, y: y }
     }
 }

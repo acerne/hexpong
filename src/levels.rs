@@ -36,8 +36,7 @@ impl Level {
         let yaml = &YamlLoader::load_from_str(&contents).unwrap()[0]["level"];
         let block_size = yaml["block-size"]
             .as_f64()
-            .expect("Missing property: block-size") as f32
-            * settings::HEXAGON_SIZE;
+            .expect("Missing property: block-size") as f32;
         Level {
             name: String::from(yaml["name"].as_str().expect("Missing property: name")),
             shape: LevelShape::from_str(yaml["shape"].as_str().expect("Missing property: shape")),
@@ -63,7 +62,7 @@ fn parse_blocks(yaml: &yaml_rust::Yaml, block_size: f32) -> Vec<block::Hexagon> 
             q: node["q"].as_i64().expect("Missing property: block index") as i32,
             r: node["r"].as_i64().expect("Missing property: block index") as i32,
         };
-        let point = index.to_pixel(block_size);
+        let point = index.to_unit(block_size);
         blocks.push(block::Hexagon::new(
             point.x,
             point.y,

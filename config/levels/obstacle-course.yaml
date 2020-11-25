@@ -1,7 +1,7 @@
 level:
   name: "Obstacle Course"
   shape: Hexagonal
-  block-size: 0.06
+  block-size: 70.0
   blocks:
     # first row
     - { q: 0, r: -3, block: Immortal }

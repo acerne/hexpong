@@ -57,10 +57,10 @@ impl GameState {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
             // ball going out of sight
-            if ball.x < 0.0
-                || ball.y < 0.0
-                || ball.x > settings::SCREEN_SIZE.0
-                || ball.y > settings::SCREEN_SIZE.1
+            if ball.x < -settings::UNIT_SIZE // TODO: better bounds, boundary ownership for multiplayer
+                || ball.y < -settings::UNIT_SIZE
+                || ball.x > settings::UNIT_SIZE
+                || ball.y > settings::UNIT_SIZE
             {
                 // respanw ball
                 balls_lost.push(ball_index);

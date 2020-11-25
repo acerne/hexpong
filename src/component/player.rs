@@ -64,8 +64,8 @@ impl Bar {
     pub fn new(side: &gamemode::Side, bar_size: f32) -> Self {
         Bar {
             pos: 0.5,
-            l1: settings::HEXAGON_SIZE / 2.0 * bar_size,
-            l2: 5.0,
+            l1: settings::norm_to_unit(bar_size) / 2.0,
+            l2: settings::norm_to_unit(0.01),
             phi: side.to_ang() - 60.0,
             side: side.clone(),
             center: mint::Point2 { x: 0.0, y: 0.0 },
@@ -92,26 +92,6 @@ impl Bar {
 
         vertices
     }
-    fn to_pixel(&self) -> mint::Point2<f32> {
-        let xc0 = settings::ORIGIN.0
-            + if (self.phi % 120.0) == 0.0 {
-                -settings::HEXAGON_SIZE / 2.0 + self.pos * settings::HEXAGON_SIZE
-            } else {
-                settings::HEXAGON_SIZE / 2.0 - self.pos * settings::HEXAGON_SIZE
-            };
-        let yc0 = settings::ORIGIN.1 + 3.0f32.sqrt() / 2.0 * settings::HEXAGON_SIZE;
-
-        let phi = self.phi.to_radians();
-
-        mint::Point2 {
-            x: (xc0 - settings::ORIGIN.0) * phi.cos()
-                + (yc0 - settings::ORIGIN.1) * phi.sin()
-                + settings::ORIGIN.0,
-            y: -(xc0 - settings::ORIGIN.0) * phi.sin()
-                + (yc0 - settings::ORIGIN.1) * phi.cos()
-                + settings::ORIGIN.1,
-        }
-    }
 }
 
 impl VisualComponent for Bar {
@@ -132,7 +112,16 @@ impl VisualComponent for Bar {
         if self.mesh == None {
             self.mesh = self.create_mesh(ctx);
         }
-        self.center = self.to_pixel();
+
+        let xc0 = -settings::UNIT_SIZE / 2.0 + self.pos * settings::UNIT_SIZE;
+        let yc0 = 3.0f32.sqrt() / 2.0 * settings::UNIT_SIZE;
+
+        let phi = self.phi.to_radians();
+
+        self.center = mint::Point2 {
+            x: xc0 * phi.cos() + yc0 * phi.sin(),
+            y: -xc0 * phi.sin() + yc0 * phi.cos(),
+        };
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -140,7 +129,16 @@ impl VisualComponent for Bar {
             graphics::draw(
                 ctx,
                 polygon,
-                ggez::graphics::DrawParam::from((self.center, theme.player1)),
+                ggez::graphics::DrawParam::from((
+                    mint::Point2 {
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.center.x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.center.y),
+                    },
+                    0.0,
+                    mint::Point2 { x: 0.0, y: 0.0 },
+                    settings::get_scale_vector(),
+                    theme.player1,
+                )),
             )?;
         }
         Ok(())
