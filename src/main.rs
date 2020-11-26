@@ -5,6 +5,7 @@ use ggez::{audio, graphics, Context, GameResult};
 
 mod component;
 mod gamemode;
+mod geometry;
 mod levels;
 mod settings;
 mod themes;
@@ -53,7 +54,7 @@ impl GameState {
             players: mode.players,
             walls: mode.walls,
             ball_speed: mode.ball_speed,
-            level: levels::Level::new(String::from("config/levels/crowded.yaml")),
+            level: levels::Level::new(String::from("config/levels/hard-boiled.yaml")),
             balls: vec![component::ball::Ball::new(mode.ball_speed)],
             theme: themes::Theme::new(String::from("config/themes/base.yaml")),
         }
@@ -63,10 +64,10 @@ impl GameState {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
             // ball going out of sight
-            if ball.x < -settings::UNIT_SIZE // TODO: better bounds, boundary ownership for multiplayer
-                || ball.y < -settings::UNIT_SIZE
-                || ball.x > settings::UNIT_SIZE
-                || ball.y > settings::UNIT_SIZE
+            if ball.x < -settings::UNIT_SIZE*1.2 // TODO: better bounds, boundary ownership for multiplayer
+                || ball.y < -settings::UNIT_SIZE*1.2
+                || ball.x > settings::UNIT_SIZE*1.2
+                || ball.y > settings::UNIT_SIZE*1.2
             {
                 // respanw ball
                 balls_lost.push(ball_index);
