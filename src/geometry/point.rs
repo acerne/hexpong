@@ -13,6 +13,9 @@ impl Point {
     fn zero() -> Self {
         Self::new(0.0, 0.0)
     }
+    pub fn distance_to(&self, other: Point) -> f32 {
+        ((other.x - self.x).powf(2.0) + (other.y - self.y).powf(2.0)).sqrt()
+    }
 }
 
 impl Copy for Point {}

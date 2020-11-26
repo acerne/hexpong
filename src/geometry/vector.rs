@@ -7,17 +7,28 @@ pub struct Vector {
 }
 
 impl Vector {
-    fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
-    fn zero() -> Self {
+    pub fn zero() -> Self {
         Self::new(0.0, 0.0)
     }
-    fn dot(self, other: Self) -> f32 {
+    pub fn normalize(&mut self) {
+        let len = self.get_length();
+        self.x = self.x / len;
+        self.y = self.y / len;
+    }
+    pub fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
-    fn cross(self, other: Self) -> f32 {
+    pub fn cross(self, other: Self) -> f32 {
         self.x * other.y - self.y * other.x
+    }
+    pub fn get_length(&self) -> f32 {
+        (self.x.powf(2.0) + self.y.powf(2.0)).sqrt()
+    }
+    pub fn get_angle(&self) -> f32 {
+        self.y.atan2(self.x)
     }
 }
 

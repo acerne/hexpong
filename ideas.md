@@ -18,6 +18,7 @@
   - *Either by having a shape that is able to redirect the ball, or by traction, that is able to pull and redirect the ball on touch.*
   - *Another option is to add slight rotation to the bar when it moves. Should probably need acceleration and analogue input, which makes it mouse only option.*
   - *Without it there is a possibility of a deadlock, where ball moves perpendicular to the bar and no obstacles are in it's path.*
+  - *Perhaps there could be a small area in the center of the bar, where ball could be "caught" and redirected by adjusting the departure angle, indicated by an arrow*
 - [ ] Grid size and shape
   - *Something to be defined in a level*
 
