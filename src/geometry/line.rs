@@ -12,7 +12,7 @@ impl Line {
     }
     pub fn from_vector(vector: Vector) -> Self {
         let r = vector.get_length();
-        let phi = vector.get_angle() + std::f32::consts::PI / 2.0;
+        let phi = vector.get_orientation() + std::f32::consts::PI / 2.0;
         Self { r, phi }
     }
     pub fn from_points(a: Point, b: Point) -> Self {
@@ -20,12 +20,16 @@ impl Line {
         let phi = (b.y - a.y).atan2(b.x - a.x) + std::f32::consts::PI / 2.0;
         Self { r, phi }
     }
-    pub fn from_slope_intercept(k: f32, n: f32) -> Self {
+    pub fn from_slope_intercept_form(k: f32, n: f32) -> Self {
+        // y = kx + n
         let phi = k.atan();
         let r = n / phi.sin();
         Self { r, phi }
     }
-    pub fn to_slope_intercept(&self) -> (f32, f32) {
+    // pub fn from_standard_form(a: f32, b: f32, c: f32) -> Self {
+    //     // ax + by = c
+    // }
+    pub fn to_slope_intercept_form(&self) -> (f32, f32) {
         // y = kx + n
         match self.phi.to_degrees() {
             0.0 => (self.r, std::f32::INFINITY),
@@ -39,6 +43,12 @@ impl Line {
             }
         }
     }
+    // pub fn to_standard_form(&self) -> (f32, f32, f32) {
+    //     // ax + by = c
+    // }
+    // fn intersection(&self, other: Line) -> Option<Point> {
+    //     None
+    // }
 }
 
 pub struct LineSegment {
@@ -59,14 +69,26 @@ impl LineSegment {
     pub fn is_on_segment(&self, point: Point) -> bool {
         point.distance_to(self.a) + point.distance_to(self.b) == self.a.distance_to(self.b)
     }
-    // fn intersection(&self, other: LineSegment) -> Option<Point> {
-    //     if self.a.x.max(self.b.x) >= other.a.x.min(other.b.x) {
-    //         let k1 = (self.a.y - self.b.y) / (self.a.x - self.b.x);
-    //         let k2 = (other.a.y - other.b.y) / (other.a.x - other.b.x);
-    //         let
-    //     }
-    //     None
-    // }
+    fn intersection(&self, other: LineSegment) -> Option<Point> {
+        let a1 = self.b.y - self.a.y;
+        let b1 = self.a.x - self.b.x;
+        let c1 = a1 * self.a.x + b1 * self.a.y;
+        let a2 = other.b.y - other.a.y;
+        let b2 = other.a.x - other.b.x;
+        let c2 = a2 * other.a.x + b2 * other.a.y;
+        let delta = a1 * b2 - a2 * b1;
+        if delta == 0.0 {
+            return None;
+        }
+        let intersection = Point {
+            x: (b2 * c1 - b1 * c2) / delta,
+            y: (a1 * c2 - a2 * c1) / delta,
+        };
+        if !self.is_on_segment(intersection) {
+            return None;
+        }
+        Some(intersection)
+    }
 }
 
 pub struct Polyline {

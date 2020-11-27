@@ -523,6 +523,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "float_eq"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb23b6902f3cdc0544f9916b4c092f46f4ff984e219d5a0c538b6b3539885af3"
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -851,6 +857,7 @@ dependencies = [
 name = "hexpong"
 version = "0.1.0"
 dependencies = [
+ "float_eq",
  "ggez",
  "rand 0.7.3",
  "yaml-rust",
