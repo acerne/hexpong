@@ -128,10 +128,24 @@ impl VisualComponent for Hexagon {
 
 impl AudibleComponent for Hexagon {
     fn play_sound(&self, ctx: &mut Context) {
-        ggez::audio::Source::new(ctx, "/impactGlass_medium_000.ogg")
-            .unwrap()
-            .play_detached()
-            .unwrap();
+        match self.block_type {
+            BlockType::Basic => ggez::audio::Source::new(ctx, "/impactGlass_medium_000.ogg")
+                .unwrap()
+                .play_detached()
+                .unwrap(),
+            BlockType::Basic2 => ggez::audio::Source::new(ctx, "/impactGlass_medium_001.ogg")
+                .unwrap()
+                .play_detached()
+                .unwrap(),
+            BlockType::Basic3 => ggez::audio::Source::new(ctx, "/impactGlass_medium_002.ogg")
+                .unwrap()
+                .play_detached()
+                .unwrap(),
+            BlockType::Immortal => ggez::audio::Source::new(ctx, "/impactMetal_medium_003.ogg")
+                .unwrap()
+                .play_detached()
+                .unwrap(),
+        }
     }
 }
 
