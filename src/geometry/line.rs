@@ -31,6 +31,7 @@ impl Line {
     pub fn to_slope_intercept_form(&self) -> (f32, f32) {
         // y = kx + n
         match self.phi.to_degrees() {
+            // TODO:: float_eq
             0.0 => (self.r, std::f32::INFINITY),
             90.0 => (std::f32::INFINITY, self.r),
             180.0 => (-self.r, std::f32::INFINITY),

@@ -1,13 +1,20 @@
 pub use self::circle::Circle;
 pub use self::line::Line;
-pub use self::line::LineSegment;
-pub use self::line::PolyLine;
+pub use self::line_segment::LineSegment;
 pub use self::point::Point;
+pub use self::polyline::Polyline;
+pub use self::r#box::Box;
+pub use self::rectangle::Rectangle;
+pub use self::scale::Scale;
+pub use self::size::Size;
 pub use self::vector::Vector;
-
+mod r#box;
 mod circle;
 mod line;
 mod line_segment;
 mod point;
 mod polyline;
+mod rectangle;
+mod scale;
+mod size;
 mod vector;

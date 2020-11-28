@@ -1,37 +1,46 @@
+use crate::geometry::Point;
+
 pub struct Vector {
-    pub x: f32,
-    pub y: f32,
+    pub dx: f32,
+    pub dy: f32,
 }
 
 impl Vector {
-    pub fn new(x: f32, y: f32) -> Self {
-        Self { x, y }
+    pub fn new(dx: f32, dy: f32) -> Self {
+        Self { dx, dy }
     }
     pub fn zero() -> Self {
         Self::new(0.0, 0.0)
     }
+    pub fn from_points(point_a: Point, point_b: Point) -> Self {
+        let diff = point_b - point_a;
+        Self {
+            dx: diff.x,
+            dy: diff.y,
+        }
+    }
     pub fn normalize(&mut self) {
         let len = self.get_length();
-        self.x = self.x / len;
-        self.y = self.y / len;
+        self.dx = self.dx / len;
+        self.dy = self.dy / len;
     }
     pub fn rotate(&mut self, phi: f32) {
-        let x1 = self.x;
-        let y1 = self.y;
-        self.x = x1 * phi.cos() - y1 * phi.sin();
-        self.y = x1 * phi.sin() + y1 * phi.cos();
+        let x1 = self.dx;
+        let y1 = self.dy;
+        self.dx = x1 * phi.cos() - y1 * phi.sin();
+        self.dy = x1 * phi.sin() + y1 * phi.cos();
     }
     pub fn dot(self, other: Self) -> f32 {
-        self.x * other.x + self.y * other.y
+        self.dx * other.dx + self.dy * other.dy
     }
     pub fn cross(self, other: Self) -> f32 {
-        self.x * other.y - self.y * other.x
+        self.dx * other.dy - self.dy * other.dx
     }
     pub fn get_length(&self) -> f32 {
-        (self.x.powf(2.0) + self.y.powf(2.0)).sqrt()
+        (self.dx.powf(2.0) + self.dy.powf(2.0)).sqrt()
     }
     pub fn get_orientation(&self) -> f32 {
-        self.y.atan2(self.x)
+        self.dy.atan2(self.dx)
     }
 }
 
@@ -40,8 +49,8 @@ impl Copy for Vector {}
 impl Clone for Vector {
     fn clone(&self) -> Self {
         Self {
-            x: self.x.clone(),
-            y: self.y.clone(),
+            dx: self.dx.clone(),
+            dy: self.dy.clone(),
         }
     }
 }
@@ -50,8 +59,8 @@ impl std::ops::Add<Vector> for Vector {
     type Output = Self;
     fn add(self, other: Vector) -> Self {
         Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            dx: self.dx + other.dx,
+            dy: self.dy + other.dy,
         }
     }
 }
@@ -60,8 +69,8 @@ impl std::ops::Add<f32> for Vector {
     type Output = Self;
     fn add(self, other: f32) -> Self {
         Self {
-            x: self.x + other,
-            y: self.y + other,
+            dx: self.dx + other,
+            dy: self.dy + other,
         }
     }
 }
@@ -70,8 +79,8 @@ impl std::ops::Sub<Vector> for Vector {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         Self {
-            x: self.x - other.x,
-            y: self.y - other.y,
+            dx: self.dx - other.dx,
+            dy: self.dy - other.dy,
         }
     }
 }
@@ -80,8 +89,8 @@ impl std::ops::Sub<f32> for Vector {
     type Output = Self;
     fn sub(self, other: f32) -> Self {
         Self {
-            x: self.x - other,
-            y: self.y - other,
+            dx: self.dx - other,
+            dy: self.dy - other,
         }
     }
 }
@@ -90,8 +99,8 @@ impl std::ops::Mul<f32> for Vector {
     type Output = Self;
     fn mul(self, other: f32) -> Self {
         Self {
-            x: self.x * other,
-            y: self.y * other,
+            dx: self.dx * other,
+            dy: self.dy * other,
         }
     }
 }
@@ -100,8 +109,8 @@ impl std::ops::Div<f32> for Vector {
     type Output = Self;
     fn div(self, other: f32) -> Self {
         Self {
-            x: self.x / other,
-            y: self.y / other,
+            dx: self.dx / other,
+            dy: self.dy / other,
         }
     }
 }
@@ -110,15 +119,15 @@ impl std::ops::Neg for Vector {
     type Output = Self;
     fn neg(self) -> Self {
         Self {
-            x: -self.x,
-            y: -self.y,
+            dx: -self.dx,
+            dy: -self.dy,
         }
     }
 }
 
 impl PartialEq for Vector {
     fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
+        self.dx == other.dx && self.dy == other.dy
     }
 }
 
@@ -126,42 +135,42 @@ impl float_eq::FloatEq for Vector {
     type Epsilon = f32;
 
     fn eq_abs(&self, other: &Self, max_diff: &f32) -> bool {
-        self.x.eq_abs(&other.x, max_diff) && self.y.eq_abs(&other.y, max_diff)
+        self.dx.eq_abs(&other.dx, max_diff) && self.dy.eq_abs(&other.dy, max_diff)
     }
 
     fn eq_rmax(&self, other: &Self, max_diff: &f32) -> bool {
-        self.x.eq_rmax(&other.x, max_diff) && self.y.eq_rmax(&other.y, max_diff)
+        self.dx.eq_rmax(&other.dx, max_diff) && self.dy.eq_rmax(&other.dy, max_diff)
     }
 
     fn eq_rmin(&self, other: &Self, max_diff: &f32) -> bool {
-        self.x.eq_rmin(&other.x, max_diff) && self.y.eq_rmin(&other.y, max_diff)
+        self.dx.eq_rmin(&other.dx, max_diff) && self.dy.eq_rmin(&other.dy, max_diff)
     }
 
     fn eq_r1st(&self, other: &Self, max_diff: &f32) -> bool {
-        self.x.eq_r1st(&other.x, max_diff) && self.y.eq_r1st(&other.y, max_diff)
+        self.dx.eq_r1st(&other.dx, max_diff) && self.dy.eq_r1st(&other.dy, max_diff)
     }
 
     fn eq_r2nd(&self, other: &Self, max_diff: &f32) -> bool {
-        self.x.eq_r2nd(&other.x, max_diff) && self.y.eq_r2nd(&other.y, max_diff)
+        self.dx.eq_r2nd(&other.dx, max_diff) && self.dy.eq_r2nd(&other.dy, max_diff)
     }
 
     fn eq_ulps(&self, other: &Self, max_diff: &float_eq::UlpsEpsilon<f32>) -> bool {
-        self.x.eq_ulps(&other.x, max_diff) && self.y.eq_ulps(&other.y, max_diff)
+        self.dx.eq_ulps(&other.dx, max_diff) && self.dy.eq_ulps(&other.dy, max_diff)
     }
 }
 
 impl std::fmt::Debug for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("Point")
-            .field("x", &self.x)
-            .field("y", &self.y)
+            .field("x", &self.dx)
+            .field("y", &self.dy)
             .finish()
     }
 }
 
 impl std::fmt::Display for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
+        write!(f, "({}, {})", self.dx, self.dy)
     }
 }
 

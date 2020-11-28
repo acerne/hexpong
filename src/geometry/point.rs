@@ -1,5 +1,4 @@
 use crate::geometry::Vector;
-use std::ops::{Add, Div, Mul, Sub};
 
 pub struct Point {
     pub x: f32,
@@ -7,10 +6,10 @@ pub struct Point {
 }
 
 impl Point {
-    fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
-    fn zero() -> Self {
+    pub fn zero() -> Self {
         Self::new(0.0, 0.0)
     }
     pub fn distance_to(&self, other: Point) -> f32 {
@@ -29,7 +28,7 @@ impl Clone for Point {
     }
 }
 
-impl Add<Point> for Point {
+impl std::ops::Add<Point> for Point {
     type Output = Self;
     fn add(self, other: Point) -> Self {
         Self {
@@ -39,17 +38,17 @@ impl Add<Point> for Point {
     }
 }
 
-impl Add<Vector> for Point {
+impl std::ops::Add<Vector> for Point {
     type Output = Self;
     fn add(self, other: Vector) -> Self {
         Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            x: self.x + other.dx,
+            y: self.y + other.dy,
         }
     }
 }
 
-impl Add<f32> for Point {
+impl std::ops::Add<f32> for Point {
     type Output = Self;
     fn add(self, other: f32) -> Self {
         Self {
@@ -59,7 +58,7 @@ impl Add<f32> for Point {
     }
 }
 
-impl Sub<Point> for Point {
+impl std::ops::Sub<Point> for Point {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         Self {
@@ -69,17 +68,17 @@ impl Sub<Point> for Point {
     }
 }
 
-impl Sub<Vector> for Point {
+impl std::ops::Sub<Vector> for Point {
     type Output = Self;
     fn sub(self, other: Vector) -> Self {
         Self {
-            x: self.x - other.x,
-            y: self.y - other.y,
+            x: self.x - other.dx,
+            y: self.y - other.dy,
         }
     }
 }
 
-impl Sub<f32> for Point {
+impl std::ops::Sub<f32> for Point {
     type Output = Self;
     fn sub(self, other: f32) -> Self {
         Self {
@@ -89,7 +88,7 @@ impl Sub<f32> for Point {
     }
 }
 
-impl Mul<f32> for Point {
+impl std::ops::Mul<f32> for Point {
     type Output = Self;
     fn mul(self, other: f32) -> Self {
         Self {
@@ -99,7 +98,7 @@ impl Mul<f32> for Point {
     }
 }
 
-impl Div<f32> for Point {
+impl std::ops::Div<f32> for Point {
     type Output = Self;
     fn div(self, other: f32) -> Self {
         Self {

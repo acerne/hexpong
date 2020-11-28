@@ -1,13 +1,13 @@
 use crate::geometry::{Point, Vector};
 
-pub struct Polyline {
-    pub points: Vec<Point>,
+pub struct Polygon {
+    pub vertices: Vec<Point>,
 }
 
-impl Polyline {
-    pub fn new(points: &Vec<Point>) -> Self {
-        let p = points.clone();
-        Self { points: p }
+impl Polygon {
+    pub fn new(vertices: &Vec<Point>) -> Self {
+        let p = vertices.clone();
+        Self { vertices: p }
     }
     pub fn from_vectors(start: Point, vectors: &Vec<Vector>) -> Self {
         let mut points = Vec::new();
