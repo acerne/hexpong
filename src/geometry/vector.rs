@@ -58,16 +58,6 @@ impl std::ops::Add<Vector> for Vector {
     }
 }
 
-impl std::ops::Add<Point> for Vector {
-    type Output = Self;
-    fn add(self, other: Point) -> Self {
-        Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
 impl std::ops::Add<f32> for Vector {
     type Output = Self;
     fn add(self, other: f32) -> Self {
@@ -81,16 +71,6 @@ impl std::ops::Add<f32> for Vector {
 impl std::ops::Sub<Vector> for Vector {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
-        Self {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
-    }
-}
-
-impl std::ops::Sub<Point> for Vector {
-    type Output = Self;
-    fn sub(self, other: Point) -> Self {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,
