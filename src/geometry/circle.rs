@@ -1,6 +1,6 @@
-use crate::geometry::point::Point;
+use crate::geometry::Point;
 
-struct Circle {
+pub struct Circle {
     center: Point,
     radius: f32,
 }

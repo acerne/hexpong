@@ -1,5 +1,3 @@
-use crate::geometry::point::Point;
-
 pub struct Vector {
     pub x: f32,
     pub y: f32,
@@ -169,7 +167,7 @@ impl std::fmt::Display for Vector {
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::vector::Vector;
+    use crate::geometry::Vector;
     use float_eq::FloatEq;
 
     #[test]

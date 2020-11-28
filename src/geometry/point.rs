@@ -1,4 +1,4 @@
-use crate::geometry::vector::Vector;
+use crate::geometry::Vector;
 use std::ops::{Add, Div, Mul, Sub};
 
 pub struct Point {
@@ -160,7 +160,7 @@ impl std::fmt::Display for Point {
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::point::Point;
+    use crate::geometry::Point;
     use float_eq::FloatEq;
 
     #[test]
