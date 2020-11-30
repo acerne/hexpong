@@ -35,6 +35,7 @@ impl Shape for Rectangle {
     }
     fn to_polygon(&self) -> Polygon {
         let mut vertices = Vec::new();
+        vertices.reserve(4);
         let half_size = self.size / 2.0;
         let w_cos = half_size.w * self.phi.cos();
         let w_sin = half_size.w * self.phi.sin();
