@@ -1,4 +1,4 @@
-use crate::geometry::{Point, Vector};
+use crate::geometry::base::{Point, Vector};
 
 pub struct LineSegment {
     pub origin: Point,
@@ -60,7 +60,8 @@ impl Clone for LineSegment {
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::{LineSegment, Point, Vector};
+    use crate::geometry::base::{Point, Vector};
+    use crate::geometry::line::LineSegment;
     use float_eq::FloatEq;
 
     #[test]

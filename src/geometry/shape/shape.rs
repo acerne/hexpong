@@ -1,4 +1,5 @@
-use crate::geometry::{Circle, Point, Polygon, Rectangle, Vector};
+use crate::geometry::base::{Point, Vector};
+use crate::geometry::shape::Polygon;
 
 pub trait Shape {
     fn translate(&mut self, vector: Vector);

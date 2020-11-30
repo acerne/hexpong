@@ -1,5 +1,5 @@
-use crate::geometry::shape::Shape;
-use crate::geometry::{Point, Polygon, Scale, Size, Vector};
+use crate::geometry::base::{Point, Scale, Size, Vector};
+use crate::geometry::shape::{shape::Shape, Polygon};
 use float_eq::FloatEq;
 
 pub struct Rectangle {
@@ -69,8 +69,8 @@ impl std::fmt::Debug for Rectangle {
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::shape::Shape;
-    use crate::geometry::{Point, Rectangle, Size, Vector};
+    use crate::geometry::base::{Point, Size, Vector};
+    use crate::geometry::shape::{shape::Shape, Rectangle};
     use float_eq::FloatEq;
     #[test]
     fn test_translate() {

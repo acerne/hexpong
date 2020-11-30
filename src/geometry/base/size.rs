@@ -1,4 +1,4 @@
-use crate::geometry::Scale;
+use crate::geometry::base::Scale;
 use float_eq::FloatEq;
 
 pub struct Size {

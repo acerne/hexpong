@@ -1,4 +1,4 @@
-use crate::geometry::Point;
+use crate::geometry::base::Point;
 use float_eq::FloatEq;
 
 pub struct Vector {
@@ -177,7 +177,7 @@ impl std::fmt::Display for Vector {
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::Vector;
+    use crate::geometry::base::Vector;
     use float_eq::FloatEq;
 
     #[test]

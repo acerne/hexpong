@@ -1,5 +1,5 @@
-use crate::geometry::shape::Shape;
-use crate::geometry::{Point, Polygon, Vector};
+use crate::geometry::base::{Point, Vector};
+use crate::geometry::shape::{shape::Shape, Polygon};
 use float_eq::FloatEq;
 
 pub struct Circle {
@@ -63,8 +63,8 @@ impl std::fmt::Debug for Circle {
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::shape::Shape;
-    use crate::geometry::{Circle, Point, Vector};
+    use crate::geometry::base::{Point, Vector};
+    use crate::geometry::shape::{shape::Shape, Circle};
     use float_eq::FloatEq;
     #[test]
     fn test_translate() {

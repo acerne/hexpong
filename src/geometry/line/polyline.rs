@@ -1,4 +1,4 @@
-use crate::geometry::{Point, Vector};
+use crate::geometry::base::{Point, Vector};
 
 pub struct Polyline {
     pub points: Vec<Point>,
