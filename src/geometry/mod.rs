@@ -4,13 +4,11 @@ pub use self::line_segment::LineSegment;
 pub use self::point::Point;
 pub use self::polygon::Polygon;
 pub use self::polyline::Polyline;
-pub use self::r#box::Box;
 pub use self::rectangle::Rectangle;
 pub use self::scale::Scale;
 pub use self::size::Size;
 pub use self::vector::Vector;
 
-mod r#box;
 mod circle;
 mod line;
 mod line_segment;

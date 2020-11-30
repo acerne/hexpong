@@ -1,4 +1,5 @@
 use crate::geometry::Point;
+use float_eq::FloatEq;
 
 pub struct Vector {
     pub dx: f32,
@@ -131,7 +132,7 @@ impl PartialEq for Vector {
     }
 }
 
-impl float_eq::FloatEq for Vector {
+impl FloatEq for Vector {
     type Epsilon = f32;
 
     fn eq_abs(&self, other: &Self, max_diff: &f32) -> bool {
@@ -162,8 +163,8 @@ impl float_eq::FloatEq for Vector {
 impl std::fmt::Debug for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("Point")
-            .field("x", &self.dx)
-            .field("y", &self.dy)
+            .field("dx", &self.dx)
+            .field("dy", &self.dy)
             .finish()
     }
 }

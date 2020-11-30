@@ -1,4 +1,5 @@
 use crate::geometry::Vector;
+use float_eq::FloatEq;
 
 pub struct Point {
     pub x: f32,
@@ -114,7 +115,7 @@ impl PartialEq for Point {
     }
 }
 
-impl float_eq::FloatEq for Point {
+impl FloatEq for Point {
     type Epsilon = f32;
 
     fn eq_abs(&self, other: &Self, max_diff: &f32) -> bool {

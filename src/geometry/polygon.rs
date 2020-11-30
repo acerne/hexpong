@@ -10,11 +10,24 @@ impl Polygon {
         Self { vertices: p }
     }
     pub fn from_vectors(start: Point, vectors: &Vec<Vector>) -> Self {
-        let mut points = Vec::new();
-        points.push(start);
+        let mut vertices = Vec::new();
+        vertices.push(start);
         for vector in vectors.iter() {
-            points.push(points.last().unwrap().clone() + vector.clone());
+            vertices.push(vertices.last().unwrap().clone() + vector.clone());
         }
-        Self { points }
+        Self { vertices }
+    }
+}
+
+impl std::fmt::Display for Polygon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let first = self.vertices.first();
+        if let Some(first) = first {
+            write!(f, "{}", first)?;
+            for item in self.vertices.iter().skip(1) {
+                write!(f, ", {}", item)?;
+            }
+        }
+        Ok(())
     }
 }
