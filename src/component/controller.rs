@@ -110,8 +110,10 @@ impl Bar {
 impl VisualComponent for Bar {
     fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
         let phi = -(self.side.to_ang() - 60.0).to_radians();
-        let tx = (ball.x - self.center.x) * phi.cos() + (ball.y - self.center.y) * phi.sin();
-        let ty = -(ball.x - self.center.x) * phi.sin() + (ball.y - self.center.y) * phi.cos();
+        let tx = (ball.shape.center.x - self.center.x) * phi.cos()
+            + (ball.shape.center.y - self.center.y) * phi.sin();
+        let ty = -(ball.shape.center.x - self.center.x) * phi.sin()
+            + (ball.shape.center.y - self.center.y) * phi.cos();
         if tx > -self.l1 && tx < self.l1 && ty > -self.l2 && ty < self.l2 {
             // hit - bounce off
             return Some(nalgebra::Vector2::new(

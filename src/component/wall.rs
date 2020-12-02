@@ -35,8 +35,12 @@ impl Wall {
 
 impl VisualComponent for Wall {
     fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
-        let d1 = ((ball.x - self.x1).powf(2.0) + (ball.y - self.y1).powf(2.0)).sqrt();
-        let d2 = ((ball.x - self.x2).powf(2.0) + (ball.y - self.y2).powf(2.0)).sqrt();
+        let d1 = ((ball.shape.center.x - self.x1).powf(2.0)
+            + (ball.shape.center.y - self.y1).powf(2.0))
+        .sqrt();
+        let d2 = ((ball.shape.center.x - self.x2).powf(2.0)
+            + (ball.shape.center.y - self.y2).powf(2.0))
+        .sqrt();
 
         if (d1 + d2) - settings::UNIT_SIZE < 1.0 {
             // hit - bounce off

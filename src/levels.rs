@@ -23,7 +23,7 @@ pub struct Level {
     pub name: String,
     pub shape: LevelShape,
     pub block_size: f32,
-    pub blocks: Vec<block::Hexagon>,
+    pub blocks: Vec<block::Block>,
 }
 
 impl Level {
@@ -51,7 +51,7 @@ impl Level {
     }
 }
 
-fn parse_blocks(yaml: &yaml_rust::Yaml, block_size: f32) -> Vec<block::Hexagon> {
+fn parse_blocks(yaml: &yaml_rust::Yaml, block_size: f32) -> Vec<block::Block> {
     let mut blocks = Vec::new();
     if !yaml["blocks"].is_array() {
         panic! {"Invalid property: blocks"}
@@ -62,7 +62,7 @@ fn parse_blocks(yaml: &yaml_rust::Yaml, block_size: f32) -> Vec<block::Hexagon> 
             r: node["r"].as_i64().expect("Missing property: block index") as i32,
         };
         let point = index.to_unit(block_size);
-        blocks.push(block::Hexagon::new(
+        blocks.push(block::Block::new(
             point.x,
             point.y,
             block_size,

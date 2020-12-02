@@ -1,4 +1,8 @@
 use crate::component::ball;
+use crate::geometry::base::{Angle, Point, Vector};
+use crate::geometry::collision;
+use crate::geometry::converter;
+use crate::geometry::shape::{shape::Shape, Hexagon};
 use crate::settings;
 use crate::themes;
 use crate::{AudibleComponent, VisualComponent};
@@ -25,35 +29,19 @@ impl BlockType {
     }
 }
 
-pub struct Hexagon {
-    pub x: f32,
-    pub y: f32,
-    pub r: f32,
-    pub phi: f32,
+pub struct Block {
+    pub shape: Hexagon,
     pub block_type: BlockType,
     mesh: Option<graphics::Mesh>,
 }
 
-impl Hexagon {
+impl Block {
     pub fn new(x: f32, y: f32, r: f32, block_type: BlockType) -> Self {
-        Hexagon {
-            x: x,
-            y: y,
-            r: r,
-            phi: 0.0,
+        Block {
+            shape: Hexagon::new(Point::new(x, y), r, Angle::new(90f64)),
             block_type: block_type,
             mesh: None,
         }
-    }
-    pub fn get_vertices(&self) -> [mint::Point2<f32>; 6] {
-        let mut vertices: [mint::Point2<f32>; 6] = [mint::Point2 { x: 0.0, y: 0.0 }; 6];
-        for i in 0..6 {
-            let angle = (self.phi + 30.0 + i as f32 * 60.0).to_radians();
-            let xh = angle.cos() * self.r;
-            let yh = angle.sin() * self.r;
-            vertices[i] = mint::Point2 { x: xh, y: yh };
-        }
-        vertices
     }
     pub fn hit(&mut self) -> bool {
         match self.block_type {
@@ -72,14 +60,16 @@ impl Hexagon {
     }
 }
 
-impl VisualComponent for Hexagon {
+impl VisualComponent for Block {
     fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
-        let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
-        if dist < self.r + ball.r {
-            return Some(nalgebra::Vector2::new(
-                (self.x - ball.x) / dist,
-                (self.y - ball.y) / dist,
-            ));
+        if collision::are_close(&self.shape, &ball.shape, 10.0) {
+            let dist = collision::distance(&self.shape, &ball.shape);
+            let vector = Vector::from_points(ball.shape.center, self.shape.center);
+            let unit_vector = vector.get_unit_vector();
+
+            if dist < 5.0 {
+                return Some(converter::convert_to_vector(&unit_vector));
+            }
         }
         None
     }
@@ -90,14 +80,15 @@ impl VisualComponent for Hexagon {
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
+        let location = self.shape.center;
         if let Some(polygon) = &self.mesh {
             graphics::draw(
                 ctx,
                 polygon,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.x),
-                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.y),
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(location.x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(location.y),
                     },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
@@ -109,7 +100,10 @@ impl VisualComponent for Hexagon {
         Ok(())
     }
     fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
-        let vertices = self.get_vertices();
+        let mut shape = self.shape.clone();
+        shape.center = Point::zero();
+        let polygon = shape.to_polygon();
+        let vertices = converter::convert_to_points(&polygon);
         Some(
             graphics::MeshBuilder::new()
                 .polygon(graphics::DrawMode::fill(), &vertices, graphics::WHITE)
@@ -126,7 +120,7 @@ impl VisualComponent for Hexagon {
     }
 }
 
-impl AudibleComponent for Hexagon {
+impl AudibleComponent for Block {
     fn play_sound(&self, ctx: &mut Context) {
         ggez::audio::Source::new(ctx, "/impactGlass_medium_000.ogg")
             .unwrap()

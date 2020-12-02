@@ -5,6 +5,7 @@ use ggez::{audio, graphics, Context, GameResult};
 
 mod component;
 mod gamemode;
+mod geometry;
 mod levels;
 mod settings;
 mod themes;
@@ -63,10 +64,10 @@ impl GameState {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
             // ball going out of sight
-            if ball.x < -settings::UNIT_SIZE // TODO: better bounds, boundary ownership for multiplayer
-                || ball.y < -settings::UNIT_SIZE
-                || ball.x > settings::UNIT_SIZE
-                || ball.y > settings::UNIT_SIZE
+            if ball.shape.center.x < -settings::UNIT_SIZE // TODO: better bounds, boundary ownership for multiplayer
+                || ball.shape.center.y < -settings::UNIT_SIZE
+                || ball.shape.center.x > settings::UNIT_SIZE
+                || ball.shape.center.y > settings::UNIT_SIZE
             {
                 // respanw ball
                 balls_lost.push(ball_index);
