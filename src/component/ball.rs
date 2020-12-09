@@ -70,9 +70,9 @@ impl VisualComponent for Ball {
                 )),
             )?;
             let text = ggez::graphics::Text::new(format!(
-                "vel: {}\ndir: {}",
+                "vel: {:.2}\ndir: {:.2}°",
                 self.velocity.get_magnitude(),
-                self.velocity.get_direction()
+                self.velocity.get_direction().deg
             ));
             graphics::draw(
                 ctx,

@@ -2,7 +2,7 @@ use ggez::*;
 
 use crate::geometry::base::*;
 use ggez::event::{KeyCode, KeyMods};
-use ggez::{audio, graphics, Context, GameResult};
+use ggez::{audio, graphics, timer, Context, GameResult};
 
 mod component;
 mod gamemode;
@@ -182,6 +182,19 @@ impl event::EventHandler for GameState {
         for ball in self.balls.iter() {
             ball.draw(ctx, &self.theme)?;
         }
+        let fps = ggez::timer::fps(ctx) as f32;
+        let fps_text = ggez::graphics::Text::new(format!("FPS: {:.1}", fps));
+        graphics::draw(
+            ctx,
+            &fps_text,
+            ggez::graphics::DrawParam::from((
+                mint::Point2 { x: 10.0, y: 10.0 },
+                0.0,
+                mint::Point2 { x: 0.0, y: 0.0 },
+                mint::Vector2 { x: 1.0, y: 1.0 },
+                [(60.0 - fps) / 60.0, 1.0 - (60.0 - fps) / 60.0, 0.0, 1.0].into(),
+            )),
+        )?;
         graphics::present(ctx)?;
         Ok(())
     }
