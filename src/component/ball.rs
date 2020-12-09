@@ -1,4 +1,4 @@
-use crate::geometry::base::{Angle, Point};
+use crate::geometry::base::{Angle, Point, Vector};
 use crate::geometry::collision;
 use crate::geometry::converter;
 use crate::geometry::shape::{shape::Shape, Circle};
@@ -10,34 +10,31 @@ use rand::Rng;
 
 pub struct Ball {
     pub shape: Circle,
-    pub velocity: f32,
-    pub direction: f32,
+    // pub velocity: f32,
+    // pub direction: f32,
+    pub velocity: Vector,
     mesh: Option<graphics::Mesh>,
 }
 
 impl Ball {
     pub fn new(ball_speed: f32) -> Self {
         let mut rng = rand::thread_rng();
-        let var = (rng.gen::<f32>() - 0.5) * 20.0;
+        let var = (rng.gen::<f64>() - 0.5) * 20.0;
 
         Ball {
             shape: Circle::new(
                 Point::new(settings::BALL_SPAWN.0, settings::BALL_SPAWN.1),
                 settings::norm_to_unit(0.01),
             ),
-            velocity: settings::norm_to_unit(ball_speed),
-            direction: (270.0 + var).to_radians(),
+            velocity: Vector::from_values(
+                settings::norm_to_unit(ball_speed),
+                Angle::new(270f64 + var),
+            ),
             mesh: None,
         }
     }
-    pub fn bounce_away(&mut self, norm_vec: &nalgebra::Vector2<f32>) {
-        let veloc_vec = nalgebra::Vector2::new(
-            self.velocity * self.direction.cos(),
-            self.velocity * self.direction.sin(),
-        );
-        let bouce_vec = veloc_vec - 2.0 * veloc_vec.dot(&norm_vec) * norm_vec;
-        self.velocity = (bouce_vec.x.powf(2.0) + bouce_vec.y.powf(2.0)).sqrt();
-        self.direction = bouce_vec.y.atan2(bouce_vec.x);
+    pub fn bounce_away(&mut self, norm_vec: Vector) {
+        self.velocity = self.velocity - norm_vec * self.velocity.dot(norm_vec) * 2.0;
     }
     fn get_position(&self) -> mint::Point2<f32> {
         converter::convert_to_point(&self.shape.center)
@@ -45,23 +42,15 @@ impl Ball {
 }
 
 impl VisualComponent for Ball {
-    fn collision(&self, ball: &Ball) -> Option<nalgebra::Vector2<f32>> {
-        // let dist = ((self.x - ball.x).powf(2.0) + (self.y - ball.y).powf(2.0)).sqrt();
-        // if dist < self.r + ball.r {
-        //     // hit - bounce off and destroy block
-        //     return Some(nalgebra::Vector2::new(
-        //         (self.x - ball.x) / dist,
-        //         (self.y - ball.y) / dist,
-        //     ));
-        // }
+    fn collision(&self, ball: &Ball) -> Option<Vector> {
+        // TODO - Ball-ball collision
         None
     }
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         if self.mesh == None {
             self.mesh = self.create_mesh(ctx);
         }
-        self.shape.center.x += self.velocity * self.direction.cos();
-        self.shape.center.y += self.velocity * self.direction.sin();
+        self.shape.center = self.shape.center + self.velocity;
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -82,8 +71,8 @@ impl VisualComponent for Ball {
             )?;
             let text = ggez::graphics::Text::new(format!(
                 "vel: {}\ndir: {}",
-                self.velocity,
-                self.direction.to_degrees()
+                self.velocity.get_magnitude(),
+                self.velocity.get_direction()
             ));
             graphics::draw(
                 ctx,

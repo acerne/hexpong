@@ -61,14 +61,11 @@ impl Block {
 }
 
 impl VisualComponent for Block {
-    fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
+    fn collision(&self, ball: &ball::Ball) -> Option<Vector> {
         if collision::are_close(&self.shape, &ball.shape, 10.0) {
-            let dist = collision::distance(&self.shape, &ball.shape);
-            let vector = Vector::from_points(ball.shape.center, self.shape.center);
-            let unit_vector = vector.get_unit_vector();
-
+            let (dist, _, _) = collision::distance_closest_points(&self.shape, &ball.shape);
             if dist < 5.0 {
-                return Some(converter::convert_to_vector(&unit_vector));
+                return collision::ball_bounce(&ball.shape, ball.velocity, &self.shape);
             }
         }
         None

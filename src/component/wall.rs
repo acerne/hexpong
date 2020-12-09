@@ -1,5 +1,9 @@
 use crate::component::ball;
 use crate::gamemode;
+use crate::geometry::base::{Angle, Point, Size, Vector};
+use crate::geometry::collision;
+use crate::geometry::converter;
+use crate::geometry::shape::{shape::Shape, Rectangle};
 use crate::settings;
 use crate::themes;
 use crate::{AudibleComponent, VisualComponent};
@@ -7,26 +11,24 @@ use ggez::audio::*;
 use ggez::*;
 
 pub struct Wall {
-    pub x1: f32,
-    pub y1: f32,
-    pub x2: f32,
-    pub y2: f32,
-    pub thickness: f32,
+    pub shape: Rectangle,
     pub side: gamemode::Side,
     mesh: Option<graphics::Mesh>,
 }
 
 impl Wall {
     pub fn new(side: &gamemode::Side) -> Self {
-        let phi = side.to_ang();
+        let phi = side.to_ang() + 30.0;
         let phi_rad = phi.to_radians();
-        let theta_rad = (phi + 60.0).to_radians();
         Wall {
-            x1: settings::UNIT_SIZE * phi_rad.cos(),
-            y1: settings::UNIT_SIZE * phi_rad.sin(),
-            x2: settings::UNIT_SIZE * theta_rad.cos(),
-            y2: settings::UNIT_SIZE * theta_rad.sin(),
-            thickness: settings::norm_to_unit(0.01),
+            shape: Rectangle::new(
+                Point::new(
+                    settings::UNIT_SIZE * phi_rad.cos() * 3.0f32.sqrt() / 2.0,
+                    settings::UNIT_SIZE * phi_rad.sin() * 3.0f32.sqrt() / 2.0,
+                ),
+                Size::new(settings::UNIT_SIZE, settings::norm_to_unit(0.01)),
+                Angle::new(phi as f64 + 90f64),
+            ),
             side: side.clone(),
             mesh: None,
         }
@@ -34,18 +36,12 @@ impl Wall {
 }
 
 impl VisualComponent for Wall {
-    fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
-        let d1 = ((ball.shape.center.x - self.x1).powf(2.0)
-            + (ball.shape.center.y - self.y1).powf(2.0))
-        .sqrt();
-        let d2 = ((ball.shape.center.x - self.x2).powf(2.0)
-            + (ball.shape.center.y - self.y2).powf(2.0))
-        .sqrt();
-
-        if (d1 + d2) - settings::UNIT_SIZE < 1.0 {
-            // hit - bounce off
-            let phi = (self.side.to_ang() - 150.0).to_radians();
-            return Some(nalgebra::Vector2::new(phi.cos(), phi.sin()));
+    fn collision(&self, ball: &ball::Ball) -> Option<Vector> {
+        if collision::are_close(&self.shape, &ball.shape, 10.0) {
+            let (dist, _, _) = collision::distance_closest_points(&self.shape, &ball.shape);
+            if dist < 5.0 {
+                return collision::ball_bounce(&ball.shape, ball.velocity, &self.shape);
+            }
         }
         None
     }
@@ -56,12 +52,15 @@ impl VisualComponent for Wall {
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
-        if let Some(line) = &self.mesh {
+        if let Some(polygon) = &self.mesh {
             graphics::draw(
                 ctx,
-                line,
+                polygon,
                 ggez::graphics::DrawParam::from((
-                    settings::get_origin(),
+                    mint::Point2 {
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center.x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center.y),
+                    },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
                     settings::get_scale_vector(),
@@ -72,23 +71,22 @@ impl VisualComponent for Wall {
         Ok(())
     }
     fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
+        let mut shape = self.shape.clone();
+        shape.center = Point::zero();
+        let polygon = shape.to_polygon();
+        let vertices = converter::convert_to_points(&polygon);
         Some(
-            graphics::Mesh::new_line(
-                ctx,
-                &[
-                    mint::Point2 {
-                        x: self.x1,
-                        y: self.y1,
-                    },
-                    mint::Point2 {
-                        x: self.x2,
-                        y: self.y2,
-                    },
-                ],
-                self.thickness,
-                graphics::WHITE,
-            )
-            .unwrap(),
+            graphics::MeshBuilder::new()
+                .polygon(graphics::DrawMode::fill(), &vertices, graphics::WHITE)
+                .unwrap()
+                .polygon(
+                    ggez::graphics::DrawMode::stroke(settings::norm_to_unit(0.005)),
+                    &vertices,
+                    [0.8, 0.8, 0.8, 0.6].into(),
+                )
+                .unwrap()
+                .build(ctx)
+                .unwrap(),
         )
     }
 }

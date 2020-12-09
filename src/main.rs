@@ -1,5 +1,6 @@
 use ggez::*;
 
+use crate::geometry::base::*;
 use ggez::event::{KeyCode, KeyMods};
 use ggez::{audio, graphics, Context, GameResult};
 
@@ -15,7 +16,7 @@ trait AudibleComponent {
 }
 
 trait VisualComponent {
-    fn collision(&self, ball: &component::ball::Ball) -> Option<nalgebra::Vector2<f32>>;
+    fn collision(&self, ball: &component::ball::Ball) -> Option<Vector>;
     fn update(&mut self, _ctx: &mut Context) -> GameResult;
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult;
     fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh>;
@@ -79,7 +80,7 @@ impl GameState {
                 let collision = wall.collision(&ball);
                 if let Some(norm_vec) = collision {
                     wall.play_sound(ctx);
-                    ball.bounce_away(&norm_vec);
+                    ball.bounce_away(norm_vec);
                     break;
                 }
             }
@@ -90,7 +91,7 @@ impl GameState {
                     let collision = bar.collision(&ball);
                     if let Some(norm_vec) = collision {
                         bar.play_sound(ctx);
-                        ball.bounce_away(&norm_vec);
+                        ball.bounce_away(norm_vec);
                         break;
                     }
                 }
@@ -102,7 +103,7 @@ impl GameState {
                 let collision = hexagon.collision(&ball);
                 if let Some(norm_vec) = collision {
                     hexagon.play_sound(ctx);
-                    ball.bounce_away(&norm_vec);
+                    ball.bounce_away(norm_vec);
                     block_hit = hexagon_index;
                     break;
                 }

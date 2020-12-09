@@ -1,5 +1,8 @@
 use crate::component::ball;
 use crate::gamemode;
+use crate::geometry::base::*;
+use crate::geometry::collision;
+use crate::geometry::shape::*;
 use crate::settings;
 use crate::themes;
 use crate::InputState;
@@ -60,12 +63,9 @@ impl Controller {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 pub struct Bar {
-    pub pos: f32,
-    pub l1: f32, // w/2
-    pub l2: f32, // h/2
-    pub phi: f32,
+    pub shape: Rectangle,
     pub side: gamemode::Side,
-    center: mint::Point2<f32>,
+    pos: f32,
     mesh: Option<graphics::Mesh>,
     owner: Player,
     reversed: bool,
@@ -74,12 +74,16 @@ pub struct Bar {
 impl Bar {
     pub fn new(side: &gamemode::Side, bar_size: f32, owner: Player, reversed: bool) -> Self {
         Bar {
+            shape: Rectangle::new(
+                Point::zero(),
+                Size::new(
+                    settings::norm_to_unit(bar_size),
+                    settings::norm_to_unit(0.02),
+                ),
+                Angle::new(side.to_ang() as f64 - 60f64),
+            ),
             pos: 0.5,
-            l1: settings::norm_to_unit(bar_size) / 2.0,
-            l2: settings::norm_to_unit(0.01),
-            phi: side.to_ang() - 60.0,
             side: side.clone(),
-            center: mint::Point2 { x: 0.0, y: 0.0 },
             mesh: None,
             owner: owner,
             reversed: reversed,
@@ -89,10 +93,10 @@ impl Bar {
         let mut vertices: [mint::Point2<f32>; 4] = [mint::Point2 { x: 0.0, y: 0.0 }; 4];
         let phi = (self.side.to_ang() - 60.0).to_radians();
 
-        let long_cos = self.l1 * phi.cos();
-        let long_sin = self.l1 * phi.sin();
-        let short_cos = self.l2 * phi.cos();
-        let short_sin = self.l2 * phi.sin();
+        let long_cos = self.shape.size.w / 2.0 * phi.cos();
+        let long_sin = self.shape.size.w / 2.0 * phi.sin();
+        let short_cos = self.shape.size.h / 2.0 * phi.cos();
+        let short_sin = self.shape.size.h / 2.0 * phi.sin();
 
         vertices[0].x = long_cos + short_sin;
         vertices[0].y = -long_sin + short_cos;
@@ -108,18 +112,12 @@ impl Bar {
 }
 
 impl VisualComponent for Bar {
-    fn collision(&self, ball: &ball::Ball) -> Option<nalgebra::Vector2<f32>> {
-        let phi = -(self.side.to_ang() - 60.0).to_radians();
-        let tx = (ball.shape.center.x - self.center.x) * phi.cos()
-            + (ball.shape.center.y - self.center.y) * phi.sin();
-        let ty = -(ball.shape.center.x - self.center.x) * phi.sin()
-            + (ball.shape.center.y - self.center.y) * phi.cos();
-        if tx > -self.l1 && tx < self.l1 && ty > -self.l2 && ty < self.l2 {
-            // hit - bounce off
-            return Some(nalgebra::Vector2::new(
-                (phi + std::f32::consts::PI / 2.0).cos(),
-                (phi + std::f32::consts::PI / 2.0).sin(),
-            ));
+    fn collision(&self, ball: &ball::Ball) -> Option<Vector> {
+        if collision::are_close(&self.shape, &ball.shape, 10.0) {
+            let (dist, _, _) = collision::distance_closest_points(&self.shape, &ball.shape);
+            if dist < 5.0 {
+                return collision::ball_bounce(&ball.shape, ball.velocity, &self.shape);
+            }
         }
         None
     }
@@ -135,12 +133,12 @@ impl VisualComponent for Bar {
             xc0 = -xc0;
         }
 
-        let phi = self.phi.to_radians();
+        let phi = self.shape.phi.to_rad32();
 
-        self.center = mint::Point2 {
-            x: xc0 * phi.cos() + yc0 * phi.sin(),
-            y: -xc0 * phi.sin() + yc0 * phi.cos(),
-        };
+        self.shape.center = Point::new(
+            xc0 * phi.cos() + yc0 * phi.sin(),
+            -xc0 * phi.sin() + yc0 * phi.cos(),
+        );
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -150,8 +148,8 @@ impl VisualComponent for Bar {
                 polygon,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.center.x),
-                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.center.y),
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center.x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center.y),
                     },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
