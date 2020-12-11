@@ -1,12 +1,12 @@
 use ggez::*;
 
-use crate::geometry::base::*;
+use geometry::base::*;
 use ggez::event::{KeyCode, KeyMods};
-use ggez::{audio, graphics, timer, Context, GameResult};
+use ggez::{graphics, Context, GameResult};
 
 mod component;
+mod converter;
 mod gamemode;
-mod geometry;
 mod levels;
 mod settings;
 mod themes;

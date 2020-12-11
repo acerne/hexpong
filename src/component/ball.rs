@@ -1,10 +1,10 @@
-use crate::geometry::base::{Angle, Point, Vector};
-use crate::geometry::collision;
-use crate::geometry::converter;
-use crate::geometry::shape::{shape::Shape, Circle};
+use crate::converter;
 use crate::settings;
 use crate::themes;
 use crate::VisualComponent;
+use geometry::base::{Angle, Point, Vector};
+use geometry::collision;
+use geometry::shape::{shape::Shape, Circle};
 use ggez::*;
 use rand::Rng;
 
@@ -26,7 +26,7 @@ impl Ball {
                 Point::new(settings::BALL_SPAWN.0, settings::BALL_SPAWN.1),
                 settings::norm_to_unit(0.01),
             ),
-            velocity: Vector::from_values(
+            velocity: Vector::from_magnitude(
                 settings::norm_to_unit(ball_speed),
                 Angle::new(270f64 + var),
             ),
@@ -71,8 +71,8 @@ impl VisualComponent for Ball {
             )?;
             let text = ggez::graphics::Text::new(format!(
                 "vel: {:.2}\ndir: {:.2}°",
-                self.velocity.get_magnitude(),
-                self.velocity.get_direction().deg
+                self.velocity.magnitude(),
+                self.velocity.orientation().deg
             ));
             graphics::draw(
                 ctx,

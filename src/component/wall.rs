@@ -1,12 +1,12 @@
 use crate::component::ball;
+use crate::converter;
 use crate::gamemode;
-use crate::geometry::base::{Angle, Point, Size, Vector};
-use crate::geometry::collision;
-use crate::geometry::converter;
-use crate::geometry::shape::{shape::Shape, Rectangle};
 use crate::settings;
 use crate::themes;
 use crate::{AudibleComponent, VisualComponent};
+use geometry::base::{Angle, Point, Size, Vector};
+use geometry::collision;
+use geometry::shape::{shape::Shape, Rectangle};
 use ggez::audio::*;
 use ggez::*;
 
@@ -37,10 +37,11 @@ impl Wall {
 
 impl VisualComponent for Wall {
     fn collision(&self, ball: &ball::Ball) -> Option<Vector> {
-        if collision::are_close(&self.shape, &ball.shape, 10.0) {
-            let (dist, _, _) = collision::distance_closest_points(&self.shape, &ball.shape);
+        if collision::detection::are_close(&self.shape, &ball.shape, 10.0) {
+            let (dist, _, _) =
+                collision::detection::distance_closest_points(&self.shape, &ball.shape);
             if dist < 5.0 {
-                return collision::ball_bounce(&ball.shape, ball.velocity, &self.shape);
+                return collision::detection::ball_bounce(&ball.shape, ball.velocity, &self.shape);
             }
         }
         None
