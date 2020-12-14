@@ -6,7 +6,7 @@ use crate::themes;
 use crate::{AudibleComponent, VisualComponent};
 use geometry::base::{Angle, Point, Size, Vector};
 use geometry::collision;
-use geometry::shape::{shape::Shape, Rectangle};
+use geometry::shape::*;
 use ggez::audio::*;
 use ggez::*;
 
@@ -59,8 +59,8 @@ impl VisualComponent for Wall {
                 polygon,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center.x),
-                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center.y),
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center().x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center().y),
                     },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
@@ -73,8 +73,8 @@ impl VisualComponent for Wall {
     }
     fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
         let mut shape = self.shape.clone();
-        shape.center = Point::zero();
-        let polygon = shape.to_polygon();
+        shape.move_to(Point::zero());
+        let polygon = shape.polygon();
         let vertices = converter::convert_to_points(&polygon);
         Some(
             graphics::MeshBuilder::new()

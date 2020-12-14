@@ -1,6 +1,7 @@
 use ggez::*;
 
 use geometry::base::*;
+use geometry::shape::*;
 use ggez::event::{KeyCode, KeyMods};
 use ggez::{graphics, Context, GameResult};
 
@@ -65,10 +66,10 @@ impl GameState {
         let mut balls_lost = Vec::new();
         for (ball_index, ball) in self.balls.iter_mut().enumerate() {
             // ball going out of sight
-            if ball.shape.center.x < -settings::UNIT_SIZE // TODO: better bounds, boundary ownership for multiplayer
-                || ball.shape.center.y < -settings::UNIT_SIZE
-                || ball.shape.center.x > settings::UNIT_SIZE
-                || ball.shape.center.y > settings::UNIT_SIZE
+            if ball.shape.center().x < -settings::UNIT_SIZE // TODO: better bounds, boundary ownership for multiplayer
+                || ball.shape.center().y < -settings::UNIT_SIZE
+                || ball.shape.center().x > settings::UNIT_SIZE
+                || ball.shape.center().y > settings::UNIT_SIZE
             {
                 // respanw ball
                 balls_lost.push(ball_index);

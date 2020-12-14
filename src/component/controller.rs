@@ -93,10 +93,10 @@ impl Bar {
         let mut vertices: [mint::Point2<f32>; 4] = [mint::Point2 { x: 0.0, y: 0.0 }; 4];
         let phi = (self.side.to_ang() - 60.0).to_radians();
 
-        let long_cos = self.shape.size.w / 2.0 * phi.cos();
-        let long_sin = self.shape.size.w / 2.0 * phi.sin();
-        let short_cos = self.shape.size.h / 2.0 * phi.cos();
-        let short_sin = self.shape.size.h / 2.0 * phi.sin();
+        let long_cos = self.shape.size().w / 2.0 * phi.cos();
+        let long_sin = self.shape.size().w / 2.0 * phi.sin();
+        let short_cos = self.shape.size().h / 2.0 * phi.cos();
+        let short_sin = self.shape.size().h / 2.0 * phi.sin();
 
         vertices[0].x = long_cos + short_sin;
         vertices[0].y = -long_sin + short_cos;
@@ -134,12 +134,12 @@ impl VisualComponent for Bar {
             xc0 = -xc0;
         }
 
-        let phi = self.shape.phi.to_rad32();
+        let phi = self.shape.orientation().to_rad32();
 
-        self.shape.center = Point::new(
+        self.shape.move_to(Point::new(
             xc0 * phi.cos() + yc0 * phi.sin(),
             -xc0 * phi.sin() + yc0 * phi.cos(),
-        );
+        ));
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -149,8 +149,8 @@ impl VisualComponent for Bar {
                 polygon,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center.x),
-                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center.y),
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center().x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center().y),
                     },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },

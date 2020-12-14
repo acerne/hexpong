@@ -3,8 +3,8 @@ use crate::settings;
 use crate::themes;
 use crate::VisualComponent;
 use geometry::base::{Angle, Point, Vector};
-use geometry::collision;
-use geometry::shape::{shape::Shape, Circle};
+use geometry::collision::*;
+use geometry::shape::*;
 use ggez::*;
 use rand::Rng;
 
@@ -37,7 +37,7 @@ impl Ball {
         self.velocity = self.velocity - norm_vec * self.velocity.dot(norm_vec) * 2.0;
     }
     fn get_position(&self) -> mint::Point2<f32> {
-        converter::convert_to_point(&self.shape.center)
+        converter::convert_to_point(&self.shape.center())
     }
 }
 
@@ -50,7 +50,7 @@ impl VisualComponent for Ball {
         if self.mesh == None {
             self.mesh = self.create_mesh(ctx);
         }
-        self.shape.center = self.shape.center + self.velocity;
+        self.shape.translate(self.velocity);
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
@@ -60,8 +60,8 @@ impl VisualComponent for Ball {
                 circle,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center.x),
-                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center.y),
+                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center().x),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center().y),
                     },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
@@ -79,8 +79,9 @@ impl VisualComponent for Ball {
                 &text,
                 ggez::graphics::DrawParam::from((
                     mint::Point2 {
-                        x: settings::ORIGIN.0 + settings::unit_to_pixel(self.shape.center.x + 10.0),
-                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center.y),
+                        x: settings::ORIGIN.0
+                            + settings::unit_to_pixel(self.shape.center().x + 10.0),
+                        y: settings::ORIGIN.1 + settings::unit_to_pixel(self.shape.center().y),
                     },
                     0.0,
                     mint::Point2 { x: 0.0, y: 0.0 },
@@ -97,7 +98,7 @@ impl VisualComponent for Ball {
                 ctx,
                 graphics::DrawMode::fill(),
                 mint::Point2 { x: 0.0, y: 0.0 },
-                self.shape.radius,
+                self.shape.radius(),
                 0.1,
                 graphics::WHITE,
             )

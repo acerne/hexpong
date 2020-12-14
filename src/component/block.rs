@@ -5,7 +5,7 @@ use crate::themes;
 use crate::{AudibleComponent, VisualComponent};
 use geometry::base::{Angle, Point, Vector};
 use geometry::collision;
-use geometry::shape::{shape::Shape, Hexagon};
+use geometry::shape::*;
 use ggez::audio::*;
 use ggez::*;
 
@@ -78,7 +78,7 @@ impl VisualComponent for Block {
         Ok(())
     }
     fn draw(&self, ctx: &mut Context, theme: &themes::Theme) -> GameResult {
-        let location = self.shape.center;
+        let location = self.shape.center();
         if let Some(polygon) = &self.mesh {
             graphics::draw(
                 ctx,
@@ -99,8 +99,8 @@ impl VisualComponent for Block {
     }
     fn create_mesh(&mut self, ctx: &mut Context) -> Option<graphics::Mesh> {
         let mut shape = self.shape.clone();
-        shape.center = Point::zero();
-        let polygon = shape.to_polygon();
+        shape.move_to(Point::zero());
+        let polygon = shape.polygon();
         let vertices = converter::convert_to_points(&polygon);
         Some(
             graphics::MeshBuilder::new()
